@@ -10,21 +10,24 @@ import './ActivityForm.css'
 interface ActivityFormProps {
   statuses: string[]
   viewMode: ViewMode
-  onAdd: (activity: Activity) => void
+  /** When provided, the form edits this activity in place instead of creating a new one. */
+  activity?: Activity
+  onSave: (activity: Activity) => void
 }
 
-export default function ActivityForm({ statuses, viewMode, onAdd }: ActivityFormProps) {
-  const [name, setName] = useState('')
-  const [notes, setNotes] = useState('')
-  const [status, setStatus] = useState(statuses[0] ?? 'Not Started')
-  const [date, setDate] = useState(todayISO())
-  const [time, setTime] = useState('')
-  const [priority, setPriority] = useState<Priority | ''>('')
-  const [recurrence, setRecurrence] = useState<Recurrence>('none')
-  const [subtasks, setSubtasks] = useState<SubTask[]>([])
+export default function ActivityForm({ statuses, viewMode, activity, onSave }: ActivityFormProps) {
+  const isEditing = !!activity
+  const [name, setName] = useState(activity?.name ?? '')
+  const [notes, setNotes] = useState(activity?.notes ?? '')
+  const [status, setStatus] = useState(activity?.status ?? statuses[0] ?? 'Not Started')
+  const [date, setDate] = useState(activity?.date ?? todayISO())
+  const [time, setTime] = useState(activity?.time ?? '')
+  const [priority, setPriority] = useState<Priority | ''>(activity?.priority ?? '')
+  const [recurrence, setRecurrence] = useState<Recurrence>(activity?.recurrence ?? 'none')
+  const [subtasks, setSubtasks] = useState<SubTask[]>(activity?.subtasks ?? [])
   const [newSubtask, setNewSubtask] = useState('')
 
-  const periodKey = periodKeyFor(viewMode, date)
+  const periodKey = periodKeyFor(activity?.period ?? viewMode, date)
 
   function addSubtask() {
     const trimmed = newSubtask.trim()
@@ -54,23 +57,23 @@ export default function ActivityForm({ statuses, viewMode, onAdd }: ActivityForm
     if (!trimmed) return
 
     const now = new Date().toISOString()
-    const activity: Activity = {
-      id: uuidv4(),
+    const saved: Activity = {
+      id: activity?.id ?? uuidv4(),
       name: trimmed,
       notes: notes.trim() || undefined,
       status: statuses.includes(status) ? status : statuses[0],
-      period: viewMode,
+      period: activity?.period ?? viewMode,
       date,
       time: time || undefined,
       priority: priority || undefined,
       recurrence: recurrence !== 'none' ? recurrence : undefined,
       subtasks: subtasks.length > 0 ? subtasks : undefined,
       periodKey,
-      createdAt: now,
+      createdAt: activity?.createdAt ?? now,
       updatedAt: now,
     }
-    onAdd(activity)
-    resetForm()
+    onSave(saved)
+    if (!isEditing) resetForm()
   }
 
   function handleAddMultiple(items: string[]) {
@@ -78,7 +81,7 @@ export default function ActivityForm({ statuses, viewMode, onAdd }: ActivityForm
     for (const raw of items) {
       const trimmed = raw.trim()
       if (!trimmed) continue
-      onAdd({
+      onSave({
         id: uuidv4(),
         name: trimmed,
         notes: undefined,
@@ -103,7 +106,7 @@ export default function ActivityForm({ statuses, viewMode, onAdd }: ActivityForm
         value={name}
         onChange={setName}
         placeholder="e.g. Finish quarterly report"
-        onMultipleDetected={handleAddMultiple}
+        onMultipleDetected={isEditing ? undefined : handleAddMultiple}
       />
 
       <UniversalInput label="Notes (optional)" value={notes} onChange={setNotes} placeholder="Any extra detail…" multiline />
@@ -137,9 +140,9 @@ export default function ActivityForm({ statuses, viewMode, onAdd }: ActivityForm
         <label className="activity-form__field">
           <span>Date</span>
           <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
-          {viewMode !== 'daily' && (
+          {(activity?.period ?? viewMode) !== 'daily' && (
             <span className="activity-form__period-hint">
-              {PERIOD_LABELS[viewMode]} bucket: {periodLabel(viewMode, periodKey)}
+              {PERIOD_LABELS[activity?.period ?? viewMode]} bucket: {periodLabel(activity?.period ?? viewMode, periodKey)}
             </span>
           )}
         </label>
@@ -205,7 +208,7 @@ export default function ActivityForm({ statuses, viewMode, onAdd }: ActivityForm
 
       <button type="submit" className="btn btn-primary activity-form__submit">
         <IconPlus size={16} />
-        Add activity
+        {isEditing ? 'Save changes' : 'Add activity'}
       </button>
     </form>
   )

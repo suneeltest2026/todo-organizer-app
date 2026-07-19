@@ -71,6 +71,7 @@ function App() {
   const [tab, setTab] = useState<Tab>('activities')
   const [listMode, setListMode] = useState<ListMode>('list')
   const [sheetOpen, setSheetOpen] = useState(false)
+  const [editingActivity, setEditingActivity] = useState<Activity | null>(null)
   const [accountMenuOpen, setAccountMenuOpen] = useState(false)
   const visiblePeriods = PERIOD_ORDER.filter((p) => settings.enabledPeriods.includes(p))
 
@@ -124,8 +125,16 @@ function App() {
     saveWorkspace(next)
   }
 
-  function handleAdd(activity: Activity) {
-    setActivities((prev) => [...prev, activity])
+  function handleSaveActivity(activity: Activity) {
+    setActivities((prev) => {
+      const exists = prev.some((a) => a.id === activity.id)
+      return exists ? prev.map((a) => (a.id === activity.id ? activity : a)) : [...prev, activity]
+    })
+  }
+
+  function closeSheet() {
+    setSheetOpen(false)
+    setEditingActivity(null)
   }
 
   function handleUpdateStatus(id: string, status: string) {
@@ -317,6 +326,7 @@ function App() {
                 onUpdateStatus={handleUpdateStatus}
                 onDelete={handleDelete}
                 onToggleSubtask={handleToggleSubtask}
+                onEdit={setEditingActivity}
               />
             </>
           ) : (
@@ -326,6 +336,7 @@ function App() {
               onUpdateStatus={handleUpdateStatus}
               onDelete={handleDelete}
               onToggleSubtask={handleToggleSubtask}
+              onEdit={setEditingActivity}
             />
           )}
 
@@ -338,12 +349,13 @@ function App() {
             <IconPlus size={22} />
           </button>
 
-          {sheetOpen && (
+          {(sheetOpen || editingActivity) && (
             <AddTaskSheet
               statuses={settings.statuses}
               viewMode={viewMode}
-              onAdd={handleAdd}
-              onClose={() => setSheetOpen(false)}
+              activity={editingActivity ?? undefined}
+              onSave={handleSaveActivity}
+              onClose={closeSheet}
             />
           )}
         </main>

@@ -28,6 +28,25 @@
   flex-direction: column;
   gap: 0.25rem;
   min-width: 0;
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  text-align: left;
+  font-family: inherit;
+  color: inherit;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+}
+
+.activity-card__main:hover .activity-card__name {
+  color: var(--accent);
+}
+
+.activity-card__main:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
 }
 
 .activity-card__title-row {
@@ -62,6 +81,7 @@
 .activity-card__name {
   font-weight: 600;
   overflow-wrap: anywhere;
+  transition: color 0.12s ease;
 }
 
 .activity-card__meta {
