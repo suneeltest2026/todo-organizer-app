@@ -1,47 +1,8 @@
-import type { Activity, AppSettings, Workspace } from './types'
+import type { Activity, AppSettings, Priority, Recurrence, SubTask, ViewMode, Workspace } from './types'
 import { DEFAULT_SETTINGS, DEFAULT_WORKSPACE } from './types'
-import { periodKeyFor } from './dateUtils'
+import { supabase } from './supabaseClient'
 
 const WORKSPACE_KEY = 'todo-organizer.workspace'
-const CURRENT_PROFILE_KEY = 'todo-organizer.currentProfile'
-const KNOWN_PROFILES_KEY = 'todo-organizer.knownProfiles'
-const LEGACY_CLAIMED_KEY = 'todo-organizer.legacyClaimed'
-
-// Legacy keys from before multi-profile / multi-workspace support (single shared list).
-const LEGACY_ACTIVITIES_KEY = 'todo-organizer.activities'
-const LEGACY_SETTINGS_KEY = 'todo-organizer.settings'
-
-export function normalizeEmail(email: string): string {
-  return email.trim().toLowerCase()
-}
-
-function activitiesKey(email: string, workspace: Workspace): string {
-  return `todo-organizer.${email}.${workspace}.activities`
-}
-
-function settingsKey(email: string, workspace: Workspace): string {
-  return `todo-organizer.${email}.${workspace}.settings`
-}
-
-// Legacy shape from before period buckets (daily/weekly only, with a `weekStart` field).
-interface LegacyActivity extends Omit<Activity, 'periodKey'> {
-  periodKey?: string
-  weekStart?: string
-}
-
-function migrateActivity(a: LegacyActivity): Activity {
-  if (a.periodKey) return a as Activity
-  const periodKey = a.period === 'weekly' ? (a.weekStart ?? a.date) : periodKeyFor(a.period, a.date)
-  return { ...a, periodKey }
-}
-
-function legacyClaimed(): boolean {
-  return localStorage.getItem(LEGACY_CLAIMED_KEY) === '1'
-}
-
-function claimLegacy(): void {
-  localStorage.setItem(LEGACY_CLAIMED_KEY, '1')
-}
 
 export function loadWorkspace(): Workspace {
   const raw = localStorage.getItem(WORKSPACE_KEY)
@@ -52,75 +13,114 @@ export function saveWorkspace(workspace: Workspace): void {
   localStorage.setItem(WORKSPACE_KEY, workspace)
 }
 
-export function loadCurrentProfile(): string | null {
-  return localStorage.getItem(CURRENT_PROFILE_KEY)
+interface ActivityRow {
+  id: string
+  workspace: string
+  name: string
+  status: string
+  notes: string | null
+  period: string
+  date: string
+  time: string | null
+  priority: string | null
+  subtasks: SubTask[] | null
+  recurrence: string | null
+  period_key: string
+  created_at: string
+  updated_at: string
 }
 
-export function saveCurrentProfile(email: string): void {
-  localStorage.setItem(CURRENT_PROFILE_KEY, email)
-}
-
-export function clearCurrentProfile(): void {
-  localStorage.removeItem(CURRENT_PROFILE_KEY)
-}
-
-export function loadKnownProfiles(): string[] {
-  try {
-    const raw = localStorage.getItem(KNOWN_PROFILES_KEY)
-    if (!raw) return []
-    const parsed = JSON.parse(raw)
-    return Array.isArray(parsed) ? parsed : []
-  } catch {
-    return []
+function rowToActivity(row: ActivityRow): Activity {
+  return {
+    id: row.id,
+    name: row.name,
+    status: row.status,
+    notes: row.notes ?? undefined,
+    period: row.period as ViewMode,
+    date: row.date,
+    time: row.time ?? undefined,
+    priority: (row.priority as Priority | null) ?? undefined,
+    subtasks: row.subtasks ?? undefined,
+    recurrence: (row.recurrence as Recurrence | null) ?? undefined,
+    periodKey: row.period_key,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
   }
 }
 
-export function rememberProfile(email: string): void {
-  const known = loadKnownProfiles()
-  if (!known.includes(email)) {
-    localStorage.setItem(KNOWN_PROFILES_KEY, JSON.stringify([...known, email]))
+function activityToRow(userId: string, workspace: Workspace, a: Activity) {
+  return {
+    id: a.id,
+    user_id: userId,
+    workspace,
+    name: a.name,
+    status: a.status,
+    notes: a.notes ?? null,
+    period: a.period,
+    date: a.date,
+    time: a.time ?? null,
+    priority: a.priority ?? null,
+    subtasks: a.subtasks ?? null,
+    recurrence: a.recurrence ?? null,
+    period_key: a.periodKey,
+    created_at: a.createdAt,
+    updated_at: a.updatedAt,
   }
 }
 
-export function loadActivities(email: string, workspace: Workspace): Activity[] {
-  try {
-    let raw = localStorage.getItem(activitiesKey(email, workspace))
-    if (!raw && workspace === DEFAULT_WORKSPACE && !legacyClaimed()) {
-      raw = localStorage.getItem(LEGACY_ACTIVITIES_KEY)
-      if (raw) claimLegacy()
-    }
-    if (!raw) return []
-    const parsed = JSON.parse(raw) as LegacyActivity[]
-    return parsed.map(migrateActivity)
-  } catch {
-    return []
+export async function loadActivities(workspace: Workspace): Promise<Activity[]> {
+  const { data, error } = await supabase
+    .from('activities')
+    .select('*')
+    .eq('workspace', workspace)
+    .order('created_at', { ascending: true })
+  if (error) throw error
+  return (data as ActivityRow[]).map(rowToActivity)
+}
+
+export async function saveActivity(userId: string, workspace: Workspace, activity: Activity): Promise<void> {
+  const { error } = await supabase.from('activities').upsert(activityToRow(userId, workspace, activity))
+  if (error) throw error
+}
+
+export async function deleteActivity(id: string): Promise<void> {
+  const { error } = await supabase.from('activities').delete().eq('id', id)
+  if (error) throw error
+}
+
+interface SettingsRow {
+  statuses: string[]
+  default_view_mode: string
+  enabled_periods: string[]
+  reminder: AppSettings['reminder']
+}
+
+export async function loadSettings(workspace: Workspace): Promise<AppSettings> {
+  const { data, error } = await supabase
+    .from('workspace_settings')
+    .select('*')
+    .eq('workspace', workspace)
+    .maybeSingle()
+  if (error) throw error
+  if (!data) return DEFAULT_SETTINGS
+  const row = data as SettingsRow
+  return {
+    statuses: row.statuses?.length ? row.statuses : DEFAULT_SETTINGS.statuses,
+    defaultViewMode: (row.default_view_mode as ViewMode) ?? DEFAULT_SETTINGS.defaultViewMode,
+    enabledPeriods: row.enabled_periods?.length ? (row.enabled_periods as ViewMode[]) : DEFAULT_SETTINGS.enabledPeriods,
+    reminder: { ...DEFAULT_SETTINGS.reminder, ...row.reminder },
   }
 }
 
-export function saveActivities(email: string, workspace: Workspace, activities: Activity[]): void {
-  localStorage.setItem(activitiesKey(email, workspace), JSON.stringify(activities))
-}
-
-export function loadSettings(email: string, workspace: Workspace): AppSettings {
-  try {
-    let raw = localStorage.getItem(settingsKey(email, workspace))
-    if (!raw && workspace === DEFAULT_WORKSPACE && !legacyClaimed()) {
-      raw = localStorage.getItem(LEGACY_SETTINGS_KEY)
-      if (raw) claimLegacy()
-    }
-    if (!raw) return DEFAULT_SETTINGS
-    const parsed = JSON.parse(raw) as AppSettings
-    return {
-      ...DEFAULT_SETTINGS,
-      ...parsed,
-      enabledPeriods: parsed.enabledPeriods?.length ? parsed.enabledPeriods : DEFAULT_SETTINGS.enabledPeriods,
-      reminder: { ...DEFAULT_SETTINGS.reminder, ...parsed.reminder },
-    }
-  } catch {
-    return DEFAULT_SETTINGS
-  }
-}
-
-export function saveSettings(email: string, workspace: Workspace, settings: AppSettings): void {
-  localStorage.setItem(settingsKey(email, workspace), JSON.stringify(settings))
+export async function saveSettings(userId: string, workspace: Workspace, settings: AppSettings): Promise<void> {
+  const { error } = await supabase.from('workspace_settings').upsert({
+    user_id: userId,
+    workspace,
+    statuses: settings.statuses,
+    default_view_mode: settings.defaultViewMode,
+    enabled_periods: settings.enabledPeriods,
+    reminder: settings.reminder,
+    updated_at: new Date().toISOString(),
+  })
+  if (error) throw error
 }
