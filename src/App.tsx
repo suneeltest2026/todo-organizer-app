@@ -1,19 +1,16 @@
 import { useEffect, useState } from 'react'
+import type { Session } from '@supabase/supabase-js'
 import { v4 as uuidv4 } from 'uuid'
 import type { Activity, AppSettings, ViewMode, Workspace } from './types'
 import { DEFAULT_SETTINGS, PERIOD_LABELS, PERIOD_ORDER, WORKSPACE_LABELS, WORKSPACE_ORDER } from './types'
 import { advanceDate, periodKeyFor } from './dateUtils'
+import { supabase } from './supabaseClient'
 import {
-  clearCurrentProfile,
+  deleteActivity,
   loadActivities,
-  loadCurrentProfile,
-  loadKnownProfiles,
   loadSettings,
   loadWorkspace,
-  normalizeEmail,
-  rememberProfile,
-  saveActivities,
-  saveCurrentProfile,
+  saveActivity,
   saveSettings,
   saveWorkspace,
 } from './storage'
@@ -59,15 +56,13 @@ function initialViewMode(settings: AppSettings): ViewMode {
 }
 
 function App() {
-  const [email, setEmail] = useState<string | null>(() => loadCurrentProfile())
+  const [session, setSession] = useState<Session | null>(null)
+  const [authLoading, setAuthLoading] = useState(true)
   const [workspace, setWorkspace] = useState<Workspace>(() => loadWorkspace())
-  const [activities, setActivities] = useState<Activity[]>(() =>
-    email ? loadActivities(email, workspace) : [],
-  )
-  const [settings, setSettings] = useState<AppSettings>(() =>
-    email ? loadSettings(email, workspace) : DEFAULT_SETTINGS,
-  )
-  const [viewMode, setViewMode] = useState<ViewMode>(() => initialViewMode(settings))
+  const [activities, setActivities] = useState<Activity[]>([])
+  const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS)
+  const [settingsLoaded, setSettingsLoaded] = useState(false)
+  const [viewMode, setViewMode] = useState<ViewMode>(() => initialViewMode(DEFAULT_SETTINGS))
   const [tab, setTab] = useState<Tab>('activities')
   const [listMode, setListMode] = useState<ListMode>('list')
   const [sheetOpen, setSheetOpen] = useState(false)
@@ -75,15 +70,46 @@ function App() {
   const [accountMenuOpen, setAccountMenuOpen] = useState(false)
   const visiblePeriods = PERIOD_ORDER.filter((p) => settings.enabledPeriods.includes(p))
 
-  useEffect(() => {
-    if (!email) return
-    saveActivities(email, workspace, activities)
-  }, [email, workspace, activities])
+  const userId = session?.user?.id ?? null
+  const email = session?.user?.email ?? null
 
   useEffect(() => {
-    if (!email) return
-    saveSettings(email, workspace, settings)
-  }, [email, workspace, settings])
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session)
+      setAuthLoading(false)
+    })
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      setSession(nextSession)
+    })
+    return () => listener.subscription.unsubscribe()
+  }, [])
+
+  useEffect(() => {
+    if (!userId) {
+      setActivities([])
+      setSettings(DEFAULT_SETTINGS)
+      setSettingsLoaded(false)
+      return
+    }
+    let cancelled = false
+    setSettingsLoaded(false)
+    Promise.all([loadActivities(workspace), loadSettings(workspace)]).then(([acts, sett]) => {
+      if (cancelled) return
+      setActivities(acts)
+      setSettings(sett)
+      setViewMode(initialViewMode(sett))
+      setSettingsLoaded(true)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [userId, workspace])
+
+  useEffect(() => {
+    if (!userId || !settingsLoaded) return
+    saveSettings(userId, workspace, settings).catch((err) => console.error('Failed to save settings', err))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [settings])
 
   useEffect(() => {
     if (!settings.enabledPeriods.includes(viewMode)) {
@@ -93,36 +119,17 @@ function App() {
 
   useReminders(activities, settings.reminder)
 
-  function handleSignIn(rawEmail: string) {
-    const normalized = normalizeEmail(rawEmail)
-    if (!normalized) return
-    rememberProfile(normalized)
-    saveCurrentProfile(normalized)
-    const nextSettings = loadSettings(normalized, workspace)
-    setEmail(normalized)
-    setSettings(nextSettings)
-    setActivities(loadActivities(normalized, workspace))
-    setViewMode(initialViewMode(nextSettings))
-    setTab('activities')
-  }
-
-  function handleSwitchProfile() {
-    clearCurrentProfile()
-    setEmail(null)
-    setActivities([])
-    setSettings(DEFAULT_SETTINGS)
+  function handleSignOut() {
+    supabase.auth.signOut()
     setTab('activities')
     setAccountMenuOpen(false)
   }
 
   function handleWorkspaceChange(next: Workspace) {
-    if (!email || next === workspace) return
-    const nextSettings = loadSettings(email, next)
+    if (next === workspace) return
     setWorkspace(next)
-    setActivities(loadActivities(email, next))
-    setSettings(nextSettings)
-    setViewMode(initialViewMode(nextSettings))
     saveWorkspace(next)
+    setTab('activities')
   }
 
   function handleSaveActivity(activity: Activity) {
@@ -130,6 +137,9 @@ function App() {
       const exists = prev.some((a) => a.id === activity.id)
       return exists ? prev.map((a) => (a.id === activity.id ? activity : a)) : [...prev, activity]
     })
+    if (userId) {
+      saveActivity(userId, workspace, activity).catch((err) => console.error('Failed to save activity', err))
+    }
   }
 
   function closeSheet() {
@@ -138,48 +148,56 @@ function App() {
   }
 
   function handleUpdateStatus(id: string, status: string) {
-    setActivities((prev) => {
-      const now = new Date().toISOString()
-      const updated = prev.map((a) => (a.id === id ? { ...a, status, updatedAt: now } : a))
+    if (!userId) return
+    const now = new Date().toISOString()
+    const target = activities.find((a) => a.id === id)
+    if (!target) return
+    const updatedActivity: Activity = { ...target, status, updatedAt: now }
 
-      const target = prev.find((a) => a.id === id)
-      const terminalStatus = settings.statuses[settings.statuses.length - 1]
-      const isRecurring = target?.recurrence && target.recurrence !== 'none'
-      if (target && isRecurring && status === terminalStatus) {
-        const nextDate = advanceDate(target.date, target.recurrence!)
-        const nextActivity: Activity = {
-          ...target,
-          id: uuidv4(),
-          status: settings.statuses[0] ?? target.status,
-          date: nextDate,
-          periodKey: periodKeyFor(target.period, nextDate),
-          subtasks: target.subtasks?.map((s) => ({ ...s, done: false })),
-          createdAt: now,
-          updatedAt: now,
-        }
-        return [...updated, nextActivity]
+    const terminalStatus = settings.statuses[settings.statuses.length - 1]
+    const isRecurring = target.recurrence && target.recurrence !== 'none'
+    let nextActivity: Activity | null = null
+    if (isRecurring && status === terminalStatus) {
+      const nextDate = advanceDate(target.date, target.recurrence!)
+      nextActivity = {
+        ...target,
+        id: uuidv4(),
+        status: settings.statuses[0] ?? target.status,
+        date: nextDate,
+        periodKey: periodKeyFor(target.period, nextDate),
+        subtasks: target.subtasks?.map((s) => ({ ...s, done: false })),
+        createdAt: now,
+        updatedAt: now,
       }
+    }
 
-      return updated
+    setActivities((prev) => {
+      const updated = prev.map((a) => (a.id === id ? updatedActivity : a))
+      return nextActivity ? [...updated, nextActivity] : updated
     })
+
+    saveActivity(userId, workspace, updatedActivity).catch((err) => console.error('Failed to save activity', err))
+    if (nextActivity) {
+      saveActivity(userId, workspace, nextActivity).catch((err) => console.error('Failed to save activity', err))
+    }
   }
 
   function handleToggleSubtask(activityId: string, subtaskId: string) {
-    setActivities((prev) =>
-      prev.map((a) =>
-        a.id === activityId
-          ? {
-              ...a,
-              subtasks: a.subtasks?.map((s) => (s.id === subtaskId ? { ...s, done: !s.done } : s)),
-              updatedAt: new Date().toISOString(),
-            }
-          : a,
-      ),
-    )
+    if (!userId) return
+    const target = activities.find((a) => a.id === activityId)
+    if (!target) return
+    const updatedActivity: Activity = {
+      ...target,
+      subtasks: target.subtasks?.map((s) => (s.id === subtaskId ? { ...s, done: !s.done } : s)),
+      updatedAt: new Date().toISOString(),
+    }
+    setActivities((prev) => prev.map((a) => (a.id === activityId ? updatedActivity : a)))
+    saveActivity(userId, workspace, updatedActivity).catch((err) => console.error('Failed to save activity', err))
   }
 
   function handleDelete(id: string) {
     setActivities((prev) => prev.filter((a) => a.id !== id))
+    deleteActivity(id).catch((err) => console.error('Failed to delete activity', err))
   }
 
   function handleStatusesChange(statuses: string[]) {
@@ -202,8 +220,12 @@ function App() {
     setSettings((prev) => ({ ...prev, enabledPeriods }))
   }
 
-  if (!email) {
-    return <ProfileGate knownProfiles={loadKnownProfiles()} onSignIn={handleSignIn} />
+  if (authLoading) {
+    return null
+  }
+
+  if (!session || !email) {
+    return <ProfileGate />
   }
 
   return (
@@ -261,13 +283,9 @@ function App() {
                   />
                   <div className="app__account-popover">
                     <span className="app__account-popover-email">{email}</span>
-                    <button
-                      type="button"
-                      className="btn btn-secondary btn-sm"
-                      onClick={handleSwitchProfile}
-                    >
+                    <button type="button" className="btn btn-secondary btn-sm" onClick={handleSignOut}>
                       <IconLogOut size={14} />
-                      Switch profile
+                      Sign out
                     </button>
                   </div>
                 </>
