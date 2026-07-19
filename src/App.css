@@ -9,12 +9,18 @@
 
 .app__header {
   display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.app__header-top {
+  display: flex;
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 1rem;
-  padding-bottom: 1.25rem;
-  border-bottom: 1px solid var(--border);
 }
 
 .app__brand {
@@ -54,7 +60,8 @@
 }
 
 .app__tabs,
-.app__view-toggle {
+.app__view-toggle,
+.app__workspace-switcher {
   display: flex;
   gap: 0.25rem;
   background: var(--surface-2);
@@ -65,7 +72,8 @@
 }
 
 .app__tabs button,
-.app__view-toggle button {
+.app__view-toggle button,
+.app__workspace-switcher button {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
@@ -81,15 +89,22 @@
 }
 
 .app__tabs button:hover:not(.is-active),
-.app__view-toggle button:hover:not(.is-active) {
+.app__view-toggle button:hover:not(.is-active),
+.app__workspace-switcher button:hover:not(.is-active) {
   color: var(--text-primary);
 }
 
 .app__tabs button.is-active,
-.app__view-toggle button.is-active {
+.app__view-toggle button.is-active,
+.app__workspace-switcher button.is-active {
   background: var(--surface-1);
   color: var(--accent);
   box-shadow: var(--shadow-xs);
+}
+
+.app__workspace-switcher {
+  background: var(--accent-soft);
+  border-color: transparent;
 }
 
 .app__main {

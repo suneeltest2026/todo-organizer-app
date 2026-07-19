@@ -1,9 +1,20 @@
-import type { Activity, AppSettings } from './types'
-import { DEFAULT_SETTINGS } from './types'
+import type { Activity, AppSettings, Workspace } from './types'
+import { DEFAULT_SETTINGS, DEFAULT_WORKSPACE } from './types'
 import { periodKeyFor } from './dateUtils'
 
-const ACTIVITIES_KEY = 'todo-organizer.activities'
-const SETTINGS_KEY = 'todo-organizer.settings'
+const WORKSPACE_KEY = 'todo-organizer.workspace'
+
+// Legacy keys from before multi-workspace support (single shared list).
+const LEGACY_ACTIVITIES_KEY = 'todo-organizer.activities'
+const LEGACY_SETTINGS_KEY = 'todo-organizer.settings'
+
+function activitiesKey(workspace: Workspace): string {
+  return `todo-organizer.${workspace}.activities`
+}
+
+function settingsKey(workspace: Workspace): string {
+  return `todo-organizer.${workspace}.settings`
+}
 
 // Legacy shape from before period buckets (daily/weekly only, with a `weekStart` field).
 interface LegacyActivity extends Omit<Activity, 'periodKey'> {
@@ -17,9 +28,21 @@ function migrateActivity(a: LegacyActivity): Activity {
   return { ...a, periodKey }
 }
 
-export function loadActivities(): Activity[] {
+export function loadWorkspace(): Workspace {
+  const raw = localStorage.getItem(WORKSPACE_KEY)
+  return raw === 'personal' || raw === 'professional' ? raw : DEFAULT_WORKSPACE
+}
+
+export function saveWorkspace(workspace: Workspace): void {
+  localStorage.setItem(WORKSPACE_KEY, workspace)
+}
+
+export function loadActivities(workspace: Workspace): Activity[] {
   try {
-    const raw = localStorage.getItem(ACTIVITIES_KEY)
+    let raw = localStorage.getItem(activitiesKey(workspace))
+    if (!raw && workspace === DEFAULT_WORKSPACE) {
+      raw = localStorage.getItem(LEGACY_ACTIVITIES_KEY)
+    }
     if (!raw) return []
     const parsed = JSON.parse(raw) as LegacyActivity[]
     return parsed.map(migrateActivity)
@@ -28,13 +51,16 @@ export function loadActivities(): Activity[] {
   }
 }
 
-export function saveActivities(activities: Activity[]): void {
-  localStorage.setItem(ACTIVITIES_KEY, JSON.stringify(activities))
+export function saveActivities(workspace: Workspace, activities: Activity[]): void {
+  localStorage.setItem(activitiesKey(workspace), JSON.stringify(activities))
 }
 
-export function loadSettings(): AppSettings {
+export function loadSettings(workspace: Workspace): AppSettings {
   try {
-    const raw = localStorage.getItem(SETTINGS_KEY)
+    let raw = localStorage.getItem(settingsKey(workspace))
+    if (!raw && workspace === DEFAULT_WORKSPACE) {
+      raw = localStorage.getItem(LEGACY_SETTINGS_KEY)
+    }
     if (!raw) return DEFAULT_SETTINGS
     const parsed = JSON.parse(raw) as AppSettings
     return {
@@ -48,6 +74,6 @@ export function loadSettings(): AppSettings {
   }
 }
 
-export function saveSettings(settings: AppSettings): void {
-  localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings))
+export function saveSettings(workspace: Workspace, settings: AppSettings): void {
+  localStorage.setItem(settingsKey(workspace), JSON.stringify(settings))
 }

@@ -12,14 +12,14 @@
   --accent: #4338ca;
   --accent-2: #6366f1;
   --accent-contrast: #ffffff;
-  --accent-soft: #eef0ff;
-  --accent-soft-strong: #e0e3fd;
+  --accent-soft: color-mix(in srgb, var(--accent) 10%, var(--surface-1));
+  --accent-soft-strong: color-mix(in srgb, var(--accent) 18%, var(--surface-1));
   --danger: #dc2626;
   --danger-soft: #fef2f2;
   --danger-strong: #b91c1c;
   --success: #059669;
   --success-soft: #ecfdf5;
-  --focus-ring: rgba(67, 56, 202, 0.35);
+  --focus-ring: color-mix(in srgb, var(--accent) 35%, transparent);
 
   --shadow-xs: 0 1px 2px rgba(16, 24, 40, 0.05);
   --shadow-sm: 0 1px 3px rgba(16, 24, 40, 0.09), 0 1px 2px rgba(16, 24, 40, 0.04);
@@ -33,6 +33,17 @@
 
   color-scheme: light;
   font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Per-workspace accent overrides — everything else derives from --accent via color-mix() */
+.app--personal {
+  --accent: #0f766e;
+  --accent-2: #14b8a6;
+}
+
+.app--professional {
+  --accent: #4338ca;
+  --accent-2: #6366f1;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -50,14 +61,14 @@
     --accent: #818cf8;
     --accent-2: #a5b4fc;
     --accent-contrast: #14161f;
-    --accent-soft: rgba(129, 140, 248, 0.14);
-    --accent-soft-strong: rgba(129, 140, 248, 0.22);
+    --accent-soft: color-mix(in srgb, var(--accent) 16%, transparent);
+    --accent-soft-strong: color-mix(in srgb, var(--accent) 26%, transparent);
     --danger: #f87171;
     --danger-soft: rgba(248, 113, 113, 0.12);
     --danger-strong: #fca5a5;
     --success: #34d399;
     --success-soft: rgba(52, 211, 153, 0.12);
-    --focus-ring: rgba(129, 140, 248, 0.45);
+    --focus-ring: color-mix(in srgb, var(--accent) 45%, transparent);
 
     --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.3);
     --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.35), 0 1px 2px rgba(0, 0, 0, 0.2);
@@ -65,6 +76,16 @@
     --shadow-lg: 0 14px 28px -8px rgba(0, 0, 0, 0.5), 0 4px 10px -4px rgba(0, 0, 0, 0.3);
 
     color-scheme: dark;
+  }
+
+  .app--personal {
+    --accent: #2dd4bf;
+    --accent-2: #5eead4;
+  }
+
+  .app--professional {
+    --accent: #818cf8;
+    --accent-2: #a5b4fc;
   }
 }
 

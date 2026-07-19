@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
-import type { Activity, AppSettings, ViewMode } from './types'
-import { PERIOD_LABELS, PERIOD_ORDER } from './types'
-import { loadActivities, loadSettings, saveActivities, saveSettings } from './storage'
+import type { Activity, AppSettings, ViewMode, Workspace } from './types'
+import { PERIOD_LABELS, PERIOD_ORDER, WORKSPACE_LABELS, WORKSPACE_ORDER, WORKSPACE_TAGLINES } from './types'
+import { loadActivities, loadSettings, loadWorkspace, saveActivities, saveSettings, saveWorkspace } from './storage'
 import ActivityForm from './components/ActivityForm'
 import ActivityList from './components/ActivityList'
 import StatusManager from './components/StatusManager'
@@ -13,36 +13,46 @@ import { useReminders } from './useReminders'
 import type { ReminderSettings as ReminderSettingsType } from './types'
 import {
   IconBell,
+  IconBriefcase,
   IconCalendarRange,
   IconClipboardCheck,
   IconDownload,
   IconEye,
   IconSliders,
   IconTag,
+  IconUser,
 } from './components/icons'
 import './App.css'
 
 type Tab = 'activities' | 'settings'
 
+const WORKSPACE_ICONS: Record<Workspace, typeof IconUser> = {
+  personal: IconUser,
+  professional: IconBriefcase,
+}
+
+function initialViewMode(settings: AppSettings): ViewMode {
+  return settings.enabledPeriods.includes(settings.defaultViewMode)
+    ? settings.defaultViewMode
+    : settings.enabledPeriods[0]
+}
+
 function App() {
-  const [activities, setActivities] = useState<Activity[]>(() => loadActivities())
-  const [settings, setSettings] = useState<AppSettings>(() => loadSettings())
-  const [viewMode, setViewMode] = useState<ViewMode>(
-    settings.enabledPeriods.includes(settings.defaultViewMode)
-      ? settings.defaultViewMode
-      : settings.enabledPeriods[0],
-  )
+  const [workspace, setWorkspace] = useState<Workspace>(() => loadWorkspace())
+  const [activities, setActivities] = useState<Activity[]>(() => loadActivities(workspace))
+  const [settings, setSettings] = useState<AppSettings>(() => loadSettings(workspace))
+  const [viewMode, setViewMode] = useState<ViewMode>(() => initialViewMode(settings))
   const [tab, setTab] = useState<Tab>('activities')
   const [guidedMode, setGuidedMode] = useState(false)
   const visiblePeriods = PERIOD_ORDER.filter((p) => settings.enabledPeriods.includes(p))
 
   useEffect(() => {
-    saveActivities(activities)
-  }, [activities])
+    saveActivities(workspace, activities)
+  }, [workspace, activities])
 
   useEffect(() => {
-    saveSettings(settings)
-  }, [settings])
+    saveSettings(workspace, settings)
+  }, [workspace, settings])
 
   useEffect(() => {
     if (!settings.enabledPeriods.includes(viewMode)) {
@@ -51,6 +61,17 @@ function App() {
   }, [settings.enabledPeriods, viewMode])
 
   useReminders(activities, settings.reminder)
+
+  function handleWorkspaceChange(next: Workspace) {
+    if (next === workspace) return
+    const nextSettings = loadSettings(next)
+    setWorkspace(next)
+    setActivities(loadActivities(next))
+    setSettings(nextSettings)
+    setViewMode(initialViewMode(nextSettings))
+    setGuidedMode(false)
+    saveWorkspace(next)
+  }
 
   function handleAdd(activity: Activity) {
     setActivities((prev) => [...prev, activity])
@@ -75,7 +96,7 @@ function App() {
   }
 
   function handleExport() {
-    exportActivitiesToExcel(activities)
+    exportActivitiesToExcel(activities, `${workspace}-activities.xlsx`)
   }
 
   function handleReminderChange(reminder: ReminderSettingsType) {
@@ -87,16 +108,35 @@ function App() {
   }
 
   return (
-    <div className="app">
+    <div className={`app app--${workspace}`}>
       <header className="app__header">
-        <div className="app__brand">
-          <span className="app__brand-mark">
-            <IconClipboardCheck size={20} />
-          </span>
-          <div className="app__brand-text">
-            <h1>To-Do Organizer</h1>
-            <span className="app__brand-tagline">Plan your work, track your progress</span>
+        <div className="app__header-top">
+          <div className="app__brand">
+            <span className="app__brand-mark">
+              <IconClipboardCheck size={20} />
+            </span>
+            <div className="app__brand-text">
+              <h1>To-Do Organizer</h1>
+              <span className="app__brand-tagline">{WORKSPACE_TAGLINES[workspace]}</span>
+            </div>
           </div>
+          <nav className="app__workspace-switcher" role="tablist" aria-label="Workspace">
+            {WORKSPACE_ORDER.map((w) => {
+              const WorkspaceIcon = WORKSPACE_ICONS[w]
+              return (
+                <button
+                  key={w}
+                  role="tab"
+                  aria-selected={workspace === w}
+                  className={workspace === w ? 'is-active' : ''}
+                  onClick={() => handleWorkspaceChange(w)}
+                >
+                  <WorkspaceIcon size={15} />
+                  {WORKSPACE_LABELS[w]}
+                </button>
+              )
+            })}
+          </nav>
         </div>
         <nav className="app__tabs" role="tablist" aria-label="Main navigation">
           <button

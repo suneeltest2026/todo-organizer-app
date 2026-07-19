@@ -159,6 +159,25 @@ export function IconEye(props: IconProps) {
   )
 }
 
+export function IconUser(props: IconProps) {
+  return (
+    <Base {...props}>
+      <circle cx="10" cy="7" r="3" />
+      <path d="M4.5 16.5a5.5 5.5 0 0 1 11 0" />
+    </Base>
+  )
+}
+
+export function IconBriefcase(props: IconProps) {
+  return (
+    <Base {...props}>
+      <rect x="3" y="7" width="14" height="9" rx="1.5" />
+      <path d="M7.5 7V5.5A1.5 1.5 0 0 1 9 4h2a1.5 1.5 0 0 1 1.5 1.5V7" />
+      <path d="M3 11.5h14" />
+    </Base>
+  )
+}
+
 export function IconBell(props: IconProps) {
   return (
     <Base {...props}>
