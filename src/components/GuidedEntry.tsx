@@ -4,6 +4,7 @@ import type { Activity, ViewMode } from '../types'
 import { PERIOD_LABELS } from '../types'
 import UniversalInput from './UniversalInput'
 import { periodKeyFor, periodLabel, todayISO } from '../dateUtils'
+import { IconChevronLeft, IconChevronRight, IconPlus, IconX } from './icons'
 import './GuidedEntry.css'
 
 interface GuidedEntryProps {
@@ -77,6 +78,7 @@ export default function GuidedEntry({ statuses, viewMode, onAdd, onCancel }: Gui
           Step {stepIndex + 1} of {STEPS.length}: {step.label}
         </span>
         <button type="button" className="guided-entry__cancel" onClick={onCancel}>
+          <IconX size={13} />
           Exit guided mode
         </button>
       </div>
@@ -121,11 +123,32 @@ export default function GuidedEntry({ statuses, viewMode, onAdd, onCancel }: Gui
       </div>
 
       <div className="guided-entry__nav">
-        <button type="button" className="guided-entry__back" onClick={handleBack} disabled={stepIndex === 0}>
+        <button
+          type="button"
+          className="btn btn-secondary"
+          onClick={handleBack}
+          disabled={stepIndex === 0}
+        >
+          <IconChevronLeft size={16} />
           Back
         </button>
-        <button type="button" className="guided-entry__next" onClick={handleNext} disabled={!canAdvance}>
-          {isLastStep ? 'Add activity' : 'Next'}
+        <button
+          type="button"
+          className="btn btn-primary guided-entry__next"
+          onClick={handleNext}
+          disabled={!canAdvance}
+        >
+          {isLastStep ? (
+            <>
+              <IconPlus size={16} />
+              Add activity
+            </>
+          ) : (
+            <>
+              Next
+              <IconChevronRight size={16} />
+            </>
+          )}
         </button>
       </div>
     </div>

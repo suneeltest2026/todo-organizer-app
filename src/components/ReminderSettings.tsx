@@ -49,6 +49,7 @@ export default function ReminderSettings({ reminder, onChange }: ReminderSetting
       <label className="reminder-settings__toggle">
         <input
           type="checkbox"
+          className="switch"
           checked={reminder.enabled}
           onChange={(e) => handleToggle(e.target.checked)}
           disabled={permission === 'unsupported'}
@@ -93,7 +94,7 @@ export default function ReminderSettings({ reminder, onChange }: ReminderSetting
             </label>
           )}
 
-          <button type="button" className="reminder-settings__test-btn" onClick={handleTestReminder}>
+          <button type="button" className="btn btn-secondary btn-sm reminder-settings__test-btn" onClick={handleTestReminder}>
             Send test reminder
           </button>
         </div>

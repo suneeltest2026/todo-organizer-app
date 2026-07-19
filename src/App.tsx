@@ -11,6 +11,15 @@ import PeriodSettings from './components/PeriodSettings'
 import { exportActivitiesToExcel } from './excelExport'
 import { useReminders } from './useReminders'
 import type { ReminderSettings as ReminderSettingsType } from './types'
+import {
+  IconBell,
+  IconCalendarRange,
+  IconClipboardCheck,
+  IconDownload,
+  IconEye,
+  IconSliders,
+  IconTag,
+} from './components/icons'
 import './App.css'
 
 type Tab = 'activities' | 'settings'
@@ -80,12 +89,32 @@ function App() {
   return (
     <div className="app">
       <header className="app__header">
-        <h1>To-Do Organizer</h1>
-        <nav className="app__tabs">
-          <button className={tab === 'activities' ? 'is-active' : ''} onClick={() => setTab('activities')}>
+        <div className="app__brand">
+          <span className="app__brand-mark">
+            <IconClipboardCheck size={20} />
+          </span>
+          <div className="app__brand-text">
+            <h1>To-Do Organizer</h1>
+            <span className="app__brand-tagline">Plan your work, track your progress</span>
+          </div>
+        </div>
+        <nav className="app__tabs" role="tablist" aria-label="Main navigation">
+          <button
+            role="tab"
+            aria-selected={tab === 'activities'}
+            className={tab === 'activities' ? 'is-active' : ''}
+            onClick={() => setTab('activities')}
+          >
+            <IconClipboardCheck size={16} />
             Activities
           </button>
-          <button className={tab === 'settings' ? 'is-active' : ''} onClick={() => setTab('settings')}>
+          <button
+            role="tab"
+            aria-selected={tab === 'settings'}
+            className={tab === 'settings' ? 'is-active' : ''}
+            onClick={() => setTab('settings')}
+          >
+            <IconSliders size={16} />
             Settings
           </button>
         </nav>
@@ -111,6 +140,7 @@ function App() {
             <label>
               <input
                 type="checkbox"
+                className="switch"
                 checked={guidedMode}
                 onChange={(e) => setGuidedMode(e.target.checked)}
               />
@@ -132,11 +162,12 @@ function App() {
           <div className="app__export-row">
             <button
               type="button"
-              className="app__export-btn"
+              className="btn btn-secondary"
               onClick={handleExport}
               disabled={activities.length === 0}
             >
-              ⬇ Download as Excel
+              <IconDownload size={16} />
+              Download as Excel
             </button>
           </div>
 
@@ -153,13 +184,23 @@ function App() {
       {tab === 'settings' && (
         <main className="app__main">
           <section className="app__settings-section">
-            <h2>Statuses</h2>
+            <div className="section-heading">
+              <span className="section-heading__icon">
+                <IconTag size={16} />
+              </span>
+              <h2>Statuses</h2>
+            </div>
             <p className="app__settings-hint">Customize the statuses available for your activities.</p>
             <StatusManager statuses={settings.statuses} onChange={handleStatusesChange} />
           </section>
 
           <section className="app__settings-section">
-            <h2>Periods</h2>
+            <div className="section-heading">
+              <span className="section-heading__icon">
+                <IconCalendarRange size={16} />
+              </span>
+              <h2>Periods</h2>
+            </div>
             <p className="app__settings-hint">
               Choose which time periods you want to track activities by. Daily and Weekly are on by
               default — turn on Bi-Weekly, Monthly, Quarterly, or Half-Yearly only if you need them.
@@ -168,7 +209,12 @@ function App() {
           </section>
 
           <section className="app__settings-section">
-            <h2>Default view</h2>
+            <div className="section-heading">
+              <span className="section-heading__icon">
+                <IconEye size={16} />
+              </span>
+              <h2>Default view</h2>
+            </div>
             <p className="app__settings-hint">Choose which period view opens by default.</p>
             <select
               value={settings.defaultViewMode}
@@ -183,7 +229,12 @@ function App() {
           </section>
 
           <section className="app__settings-section">
-            <h2>Reminders</h2>
+            <div className="section-heading">
+              <span className="section-heading__icon">
+                <IconBell size={16} />
+              </span>
+              <h2>Reminders</h2>
+            </div>
             <p className="app__settings-hint">
               Get a browser notification daily at a set time, or before a task's due date. Requires this
               app to be open in a tab.

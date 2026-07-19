@@ -1,5 +1,6 @@
 import type { Activity, ViewMode } from '../types'
 import { periodLabel } from '../dateUtils'
+import { IconTrash } from './icons'
 import './ActivityList.css'
 
 interface ActivityListProps {
@@ -28,7 +29,12 @@ export default function ActivityList({
   const sortedKeys = Array.from(groups.keys()).sort((a, b) => b.localeCompare(a))
 
   if (sortedKeys.length === 0) {
-    return <p className="activity-list__empty">No activities yet. Add one above to get started.</p>
+    return (
+      <div className="activity-list__empty">
+        <p className="activity-list__empty-title">No activities yet</p>
+        <p className="activity-list__empty-hint">Add one above to get started.</p>
+      </div>
+    )
   }
 
   return (
@@ -44,24 +50,29 @@ export default function ActivityList({
                   {activity.notes && <p className="activity-list__item-notes">{activity.notes}</p>}
                 </div>
                 <div className="activity-list__item-controls">
-                  <select
+                  <span
                     className={`activity-list__status activity-list__status--${statusSlug(activity.status)}`}
-                    value={activity.status}
-                    onChange={(e) => onUpdateStatus(activity.id, e.target.value)}
                   >
-                    {statuses.map((s) => (
-                      <option key={s} value={s}>
-                        {s}
-                      </option>
-                    ))}
-                  </select>
+                    <span className="activity-list__status-dot" />
+                    <select
+                      value={activity.status}
+                      onChange={(e) => onUpdateStatus(activity.id, e.target.value)}
+                      aria-label={`Status for ${activity.name}`}
+                    >
+                      {statuses.map((s) => (
+                        <option key={s} value={s}>
+                          {s}
+                        </option>
+                      ))}
+                    </select>
+                  </span>
                   <button
                     type="button"
-                    className="activity-list__delete"
+                    className="icon-btn"
                     onClick={() => onDelete(activity.id)}
                     aria-label={`Delete ${activity.name}`}
                   >
-                    🗑
+                    <IconTrash size={16} />
                   </button>
                 </div>
               </li>
