@@ -3,9 +3,15 @@ import type { ChangeEvent } from 'react'
 import './UniversalInput.css'
 import { recognizeImageText } from '../ocr'
 import { useSpeechToText } from '../useSpeechToText'
-import { IconCamera, IconKeyboard, IconMic, IconStop } from './icons'
+import { splitIntoListItems } from '../listSplit'
+import { IconCamera, IconKeyboard, IconMic, IconPlus, IconStop } from './icons'
 
 type Mode = 'type' | 'photo' | 'voice'
+
+interface DetectedItems {
+  text: string
+  items: string[]
+}
 
 interface UniversalInputProps {
   label?: string
@@ -14,6 +20,8 @@ interface UniversalInputProps {
   placeholder?: string
   multiline?: boolean
   disabled?: boolean
+  /** When a photo yields more than one list item and this is provided, offer to add each as a separate activity instead of merging them into this field. */
+  onMultipleDetected?: (items: string[]) => void
 }
 
 export default function UniversalInput({
@@ -23,12 +31,14 @@ export default function UniversalInput({
   placeholder,
   multiline = false,
   disabled = false,
+  onMultipleDetected,
 }: UniversalInputProps) {
   const [mode, setMode] = useState<Mode>('type')
   const [ocrBusy, setOcrBusy] = useState(false)
   const [ocrProgress, setOcrProgress] = useState(0)
   const [ocrError, setOcrError] = useState<string | null>(null)
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
+  const [detected, setDetected] = useState<DetectedItems | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const {
@@ -48,6 +58,7 @@ export default function UniversalInput({
     if (!file) return
 
     setOcrError(null)
+    setDetected(null)
     setPhotoPreview(URL.createObjectURL(file))
     setOcrBusy(true)
     setOcrProgress(0)
@@ -55,13 +66,31 @@ export default function UniversalInput({
     try {
       const text = await recognizeImageText(file, (p) => setOcrProgress(p))
       const trimmed = text.trim()
-      onChange(value ? `${value}\n${trimmed}` : trimmed)
+      const items = splitIntoListItems(trimmed)
+      if (onMultipleDetected && items.length > 1) {
+        setDetected({ text: trimmed, items })
+      } else {
+        onChange(value ? `${value}\n${trimmed}` : trimmed)
+      }
     } catch {
       setOcrError('Could not read text from that image. Try a clearer photo, or type instead.')
     } finally {
       setOcrBusy(false)
       if (fileInputRef.current) fileInputRef.current.value = ''
     }
+  }
+
+  function handleConfirmMultiple() {
+    if (!detected || !onMultipleDetected) return
+    onMultipleDetected(detected.items)
+    setDetected(null)
+    setPhotoPreview(null)
+  }
+
+  function handleUseAsSingle() {
+    if (!detected) return
+    onChange(value ? `${value}\n${detected.text}` : detected.text)
+    setDetected(null)
   }
 
   const Field = multiline ? 'textarea' : 'input'
@@ -128,9 +157,35 @@ export default function UniversalInput({
               <img src={photoPreview} alt="Uploaded preview" className="universal-input__preview" />
             )}
             {ocrError && <p className="universal-input__error">{ocrError}</p>}
-            <p className="universal-input__hint">
-              We'll pull the text out of your photo and drop it below — review and edit before saving.
-            </p>
+
+            {detected && (
+              <div className="universal-input__multi-detect">
+                <p className="universal-input__multi-detect-title">
+                  Found {detected.items.length} items in this photo
+                </p>
+                <ul className="universal-input__multi-detect-list">
+                  {detected.items.map((item, i) => (
+                    <li key={i}>{item}</li>
+                  ))}
+                </ul>
+                <div className="universal-input__multi-detect-actions">
+                  <button type="button" className="btn btn-primary btn-sm" onClick={handleConfirmMultiple}>
+                    <IconPlus size={14} />
+                    Add {detected.items.length} separate activities
+                  </button>
+                  <button type="button" className="btn btn-secondary btn-sm" onClick={handleUseAsSingle}>
+                    Use as one activity instead
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {!detected && (
+              <p className="universal-input__hint">
+                We'll pull the text out of your photo and drop it below — review and edit before saving.
+                If we spot a numbered or lettered list, we'll offer to add each item separately.
+              </p>
+            )}
           </div>
         )}
 
