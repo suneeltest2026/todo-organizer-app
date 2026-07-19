@@ -2,6 +2,7 @@ import { useRef, useState } from 'react'
 import type { ChangeEvent } from 'react'
 import './UniversalInput.css'
 import { recognizeImageText } from '../ocr'
+import { cleanOcrNoise } from '../ocrClean'
 import { useSpeechToText } from '../useSpeechToText'
 import { splitIntoListItems } from '../listSplit'
 import { IconCamera, IconKeyboard, IconMic, IconPlus, IconStop } from './icons'
@@ -65,7 +66,7 @@ export default function UniversalInput({
 
     try {
       const text = await recognizeImageText(file, (p) => setOcrProgress(p))
-      const trimmed = text.trim()
+      const trimmed = cleanOcrNoise(text)
       const items = splitIntoListItems(trimmed)
       if (onMultipleDetected && items.length > 1) {
         setDetected({ text: trimmed, items })
