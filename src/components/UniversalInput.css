@@ -1,0 +1,125 @@
+.universal-input {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  width: 100%;
+}
+
+.universal-input__label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.universal-input__tabs {
+  display: flex;
+  gap: 0.25rem;
+  background: var(--surface-2);
+  border-radius: 8px;
+  padding: 0.25rem;
+  width: fit-content;
+}
+
+.universal-input__tab {
+  border: none;
+  background: transparent;
+  padding: 0.35rem 0.7rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  color: var(--text-secondary);
+}
+
+.universal-input__tab.is-active {
+  background: var(--surface-1);
+  color: var(--text-primary);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+.universal-input__tab:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.universal-input__panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.universal-input__field {
+  width: 100%;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  background: var(--surface-1);
+  color: var(--text-primary);
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.universal-input__field:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.universal-input__photo-controls,
+.universal-input__voice-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.6rem;
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  background: var(--surface-2);
+}
+
+.universal-input__action-btn {
+  align-self: flex-start;
+  border: 1px solid var(--border);
+  background: var(--surface-1);
+  color: var(--text-primary);
+  padding: 0.5rem 0.9rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.universal-input__action-btn:hover {
+  border-color: var(--accent);
+}
+
+.universal-input__action-btn.is-recording {
+  background: var(--danger-soft);
+  border-color: var(--danger);
+  color: var(--danger);
+  animation: pulse 1.4s infinite;
+}
+
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.35); }
+  70% { box-shadow: 0 0 0 8px rgba(220, 38, 38, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
+}
+
+.universal-input__preview {
+  max-width: 220px;
+  max-height: 160px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  object-fit: contain;
+}
+
+.universal-input__hint {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.universal-input__error {
+  font-size: 0.8rem;
+  color: var(--danger);
+  margin: 0;
+}

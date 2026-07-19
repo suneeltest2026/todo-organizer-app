@@ -1,0 +1,56 @@
+.status-manager {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.status-manager__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.status-manager__item,
+.status-manager__add {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.status-manager__input {
+  flex: 1;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface-1);
+  color: var(--text-primary);
+  font-size: 0.9rem;
+}
+
+.status-manager__remove {
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text-secondary);
+  border-radius: 6px;
+  width: 2rem;
+  height: 2rem;
+  cursor: pointer;
+}
+
+.status-manager__remove:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.status-manager__add-btn {
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: var(--accent-contrast);
+  border-radius: 6px;
+  padding: 0.4rem 0.8rem;
+  cursor: pointer;
+  white-space: nowrap;
+}

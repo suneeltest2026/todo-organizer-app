@@ -1,0 +1,117 @@
+.app {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.app__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.app__header h1 {
+  font-size: 1.5rem;
+}
+
+.app__tabs,
+.app__view-toggle {
+  display: flex;
+  gap: 0.25rem;
+  background: var(--surface-2);
+  border-radius: 10px;
+  padding: 0.25rem;
+  width: fit-content;
+}
+
+.app__tabs button,
+.app__view-toggle button {
+  border: none;
+  background: transparent;
+  padding: 0.45rem 0.9rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.app__tabs button.is-active,
+.app__view-toggle button.is-active {
+  background: var(--surface-1);
+  color: var(--text-primary);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+.app__main {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.app__settings-section {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.app__settings-hint {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.app__entry-mode-toggle {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.app__entry-mode-toggle label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  cursor: pointer;
+}
+
+.app__export-row {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.app__export-btn {
+  border: 1px solid var(--success);
+  background: var(--success-soft);
+  color: var(--success);
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.app__export-btn:hover:not(:disabled) {
+  opacity: 0.85;
+}
+
+.app__export-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.app__settings-section select {
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-1);
+  color: var(--text-primary);
+  width: fit-content;
+}
