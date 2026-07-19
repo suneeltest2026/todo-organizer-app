@@ -1,6 +1,7 @@
 import * as XLSX from 'xlsx'
 import type { Activity } from './types'
-import { formatDateLabel, formatWeekLabel } from './dateUtils'
+import { PERIOD_LABELS } from './types'
+import { periodLabel } from './dateUtils'
 
 export function exportActivitiesToExcel(activities: Activity[], filename = 'activities.xlsx'): void {
   const rows = activities
@@ -9,8 +10,8 @@ export function exportActivitiesToExcel(activities: Activity[], filename = 'acti
     .map((a) => ({
       Name: a.name,
       Status: a.status,
-      Period: a.period === 'daily' ? 'Daily' : 'Weekly',
-      'Date / Week': a.period === 'daily' ? formatDateLabel(a.date) : formatWeekLabel(a.weekStart ?? a.date),
+      Period: PERIOD_LABELS[a.period],
+      'Date / Period': periodLabel(a.period, a.periodKey),
       Notes: a.notes ?? '',
       'Created At': new Date(a.createdAt).toLocaleString(),
       'Updated At': new Date(a.updatedAt).toLocaleString(),
@@ -20,8 +21,8 @@ export function exportActivitiesToExcel(activities: Activity[], filename = 'acti
   worksheet['!cols'] = [
     { wch: 32 }, // Name
     { wch: 14 }, // Status
-    { wch: 10 }, // Period
-    { wch: 24 }, // Date / Week
+    { wch: 12 }, // Period
+    { wch: 26 }, // Date / Period
     { wch: 40 }, // Notes
     { wch: 20 }, // Created At
     { wch: 20 }, // Updated At

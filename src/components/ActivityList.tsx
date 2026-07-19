@@ -1,5 +1,5 @@
 import type { Activity, ViewMode } from '../types'
-import { formatDateLabel, formatWeekLabel } from '../dateUtils'
+import { periodLabel } from '../dateUtils'
 import './ActivityList.css'
 
 interface ActivityListProps {
@@ -21,7 +21,7 @@ export default function ActivityList({
 
   const groups = new Map<string, Activity[]>()
   for (const activity of relevant) {
-    const key = viewMode === 'daily' ? activity.date : activity.weekStart ?? activity.date
+    const key = activity.periodKey
     if (!groups.has(key)) groups.set(key, [])
     groups.get(key)!.push(activity)
   }
@@ -35,9 +35,7 @@ export default function ActivityList({
     <div className="activity-list">
       {sortedKeys.map((key) => (
         <section key={key} className="activity-list__group">
-          <h3 className="activity-list__group-title">
-            {viewMode === 'daily' ? formatDateLabel(key) : formatWeekLabel(key)}
-          </h3>
+          <h3 className="activity-list__group-title">{periodLabel(viewMode, key)}</h3>
           <ul className="activity-list__items">
             {groups.get(key)!.map((activity) => (
               <li key={activity.id} className="activity-list__item">

@@ -1,4 +1,15 @@
-export type ViewMode = 'daily' | 'weekly'
+export type ViewMode = 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'quarterly' | 'halfyearly'
+
+export const PERIOD_ORDER: ViewMode[] = ['daily', 'weekly', 'biweekly', 'monthly', 'quarterly', 'halfyearly']
+
+export const PERIOD_LABELS: Record<ViewMode, string> = {
+  daily: 'Daily',
+  weekly: 'Weekly',
+  biweekly: 'Bi-Weekly',
+  monthly: 'Monthly',
+  quarterly: 'Quarterly',
+  halfyearly: 'Half-Yearly',
+}
 
 export interface Activity {
   id: string
@@ -6,10 +17,10 @@ export interface Activity {
   status: string
   notes?: string
   period: ViewMode
-  /** ISO date (yyyy-mm-dd) the activity belongs to when period is 'daily' */
+  /** ISO date (yyyy-mm-dd) the user picked for this activity */
   date: string
-  /** ISO date (yyyy-mm-dd) of the Monday that starts the week when period is 'weekly' */
-  weekStart?: string
+  /** Bucket key derived from `date` + `period` — used for grouping (e.g. a week-start date, "2026-03", "2026-Q1") */
+  periodKey: string
   createdAt: string
   updatedAt: string
 }
@@ -26,6 +37,8 @@ export interface ReminderSettings {
 export interface AppSettings {
   statuses: string[]
   defaultViewMode: ViewMode
+  /** Which periods show up as tabs in the Activities view. Extras stay hidden until the user opts in. */
+  enabledPeriods: ViewMode[]
   reminder: ReminderSettings
 }
 
@@ -34,6 +47,7 @@ export const DEFAULT_STATUSES = ['Not Started', 'In Progress', 'Done']
 export const DEFAULT_SETTINGS: AppSettings = {
   statuses: DEFAULT_STATUSES,
   defaultViewMode: 'daily',
+  enabledPeriods: ['daily', 'weekly'],
   reminder: {
     enabled: false,
     frequency: 'daily',

@@ -70,6 +70,12 @@
   font-size: 0.95rem;
 }
 
+.guided-entry__period-hint {
+  font-weight: 400;
+  font-size: 0.78rem;
+  color: var(--accent);
+}
+
 .guided-entry__nav {
   display: flex;
   justify-content: space-between;

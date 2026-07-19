@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import type { Activity, ReminderSettings } from './types'
 import { showNotification } from './notifications'
-import { todayISO } from './dateUtils'
+import { periodEndDate, todayISO } from './dateUtils'
 
 const FIRED_KEY = 'todo-organizer.remindersFired'
 const CHECK_INTERVAL_MS = 20_000
@@ -24,10 +24,7 @@ function endOfDay(dateISO: string): Date {
 }
 
 function dueDateFor(activity: Activity): string {
-  if (activity.period === 'daily') return activity.date
-  const start = new Date((activity.weekStart ?? activity.date) + 'T00:00:00')
-  start.setDate(start.getDate() + 6)
-  return start.toISOString().slice(0, 10)
+  return periodEndDate(activity.period, activity.periodKey)
 }
 
 /** Runs a periodic check while the app is open and fires browser notifications per the reminder settings. */

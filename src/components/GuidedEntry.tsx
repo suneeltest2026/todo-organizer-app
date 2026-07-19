@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { v4 as uuidv4 } from 'uuid'
 import type { Activity, ViewMode } from '../types'
+import { PERIOD_LABELS } from '../types'
 import UniversalInput from './UniversalInput'
-import { currentWeekStart, todayISO } from '../dateUtils'
+import { periodKeyFor, periodLabel, todayISO } from '../dateUtils'
 import './GuidedEntry.css'
 
 interface GuidedEntryProps {
@@ -26,13 +27,13 @@ export default function GuidedEntry({ statuses, viewMode, onAdd, onCancel }: Gui
   const [name, setName] = useState('')
   const [status, setStatus] = useState(statuses[0] ?? 'Not Started')
   const [date, setDate] = useState(todayISO())
-  const [weekStart, setWeekStart] = useState(currentWeekStart())
   const [notes, setNotes] = useState('')
 
   const step = STEPS[stepIndex]
   const isLastStep = stepIndex === STEPS.length - 1
   const canAdvance = step.id !== 'name' || name.trim().length > 0
   const progressPercent = Math.round(((stepIndex + 1) / STEPS.length) * 100)
+  const periodKey = periodKeyFor(viewMode, date)
 
   function handleNext() {
     if (!canAdvance) return
@@ -57,8 +58,8 @@ export default function GuidedEntry({ statuses, viewMode, onAdd, onCancel }: Gui
       notes: notes.trim() || undefined,
       status: statuses.includes(status) ? status : statuses[0],
       period: viewMode,
-      date: viewMode === 'daily' ? date : weekStart,
-      weekStart: viewMode === 'weekly' ? weekStart : undefined,
+      date,
+      periodKey,
       createdAt: now,
       updatedAt: now,
     }
@@ -102,18 +103,17 @@ export default function GuidedEntry({ statuses, viewMode, onAdd, onCancel }: Gui
           </label>
         )}
 
-        {step.id === 'date' &&
-          (viewMode === 'daily' ? (
-            <label className="guided-entry__field">
-              <span>Date</span>
-              <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
-            </label>
-          ) : (
-            <label className="guided-entry__field">
-              <span>Week starting (Mon)</span>
-              <input type="date" value={weekStart} onChange={(e) => setWeekStart(e.target.value)} />
-            </label>
-          ))}
+        {step.id === 'date' && (
+          <label className="guided-entry__field">
+            <span>Date</span>
+            <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+            {viewMode !== 'daily' && (
+              <span className="guided-entry__period-hint">
+                {PERIOD_LABELS[viewMode]} bucket: {periodLabel(viewMode, periodKey)}
+              </span>
+            )}
+          </label>
+        )}
 
         {step.id === 'notes' && (
           <UniversalInput label="Any notes? (optional)" value={notes} onChange={setNotes} placeholder="Any extra detail…" multiline />

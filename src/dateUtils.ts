@@ -1,3 +1,5 @@
+import type { ViewMode } from './types'
+
 export function todayISO(): string {
   return toISODate(new Date())
 }
@@ -33,4 +35,99 @@ export function formatWeekLabel(weekStartISO: string): string {
 export function formatDateLabel(dateISO: string): string {
   const d = new Date(dateISO + 'T00:00:00')
   return d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })
+}
+
+// A fixed Monday used as the anchor so bi-weekly buckets are consistent across sessions.
+const BIWEEK_ANCHOR = new Date('2024-01-01T00:00:00')
+
+function biweekStartOf(d: Date): string {
+  const monday = new Date(weekStartOf(d) + 'T00:00:00')
+  const diffDays = Math.round((monday.getTime() - BIWEEK_ANCHOR.getTime()) / 86_400_000)
+  const biweekIndex = Math.floor(diffDays / 14)
+  const bucketStart = new Date(BIWEEK_ANCHOR)
+  bucketStart.setDate(bucketStart.getDate() + biweekIndex * 14)
+  return toISODate(bucketStart)
+}
+
+function quarterOf(d: Date): number {
+  return Math.floor(d.getMonth() / 3) + 1
+}
+
+function halfOf(d: Date): number {
+  return d.getMonth() < 6 ? 1 : 2
+}
+
+/** Computes the bucket key an activity belongs to, given the period and the date the user picked. */
+export function periodKeyFor(period: ViewMode, dateISO: string): string {
+  const d = new Date(dateISO + 'T00:00:00')
+  switch (period) {
+    case 'daily':
+      return dateISO
+    case 'weekly':
+      return weekStartOf(d)
+    case 'biweekly':
+      return biweekStartOf(d)
+    case 'monthly':
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+    case 'quarterly':
+      return `${d.getFullYear()}-Q${quarterOf(d)}`
+    case 'halfyearly':
+      return `${d.getFullYear()}-H${halfOf(d)}`
+  }
+}
+
+/** Human-readable label for a bucket key, given its period. */
+export function periodLabel(period: ViewMode, key: string): string {
+  switch (period) {
+    case 'daily':
+      return formatDateLabel(key)
+    case 'weekly':
+      return formatWeekLabel(key)
+    case 'biweekly': {
+      const start = new Date(key + 'T00:00:00')
+      const end = new Date(start)
+      end.setDate(end.getDate() + 13)
+      const opts: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' }
+      return `${start.toLocaleDateString(undefined, opts)} – ${end.toLocaleDateString(undefined, opts)}, ${end.getFullYear()}`
+    }
+    case 'monthly': {
+      const [y, m] = key.split('-').map(Number)
+      return new Date(y, m - 1, 1).toLocaleDateString(undefined, { month: 'long', year: 'numeric' })
+    }
+    case 'quarterly': {
+      const [y, q] = key.split('-Q')
+      return `Q${q} ${y}`
+    }
+    case 'halfyearly': {
+      const [y, h] = key.split('-H')
+      return `${h === '1' ? 'H1 (Jan–Jun)' : 'H2 (Jul–Dec)'} ${y}`
+    }
+  }
+}
+
+/** Returns the ISO date (yyyy-mm-dd) of the last day of the bucket — used for reminder due-date math. */
+export function periodEndDate(period: ViewMode, key: string): string {
+  switch (period) {
+    case 'daily':
+      return key
+    case 'weekly':
+    case 'biweekly': {
+      const start = new Date(key + 'T00:00:00')
+      const end = new Date(start)
+      end.setDate(end.getDate() + (period === 'weekly' ? 6 : 13))
+      return toISODate(end)
+    }
+    case 'monthly': {
+      const [y, m] = key.split('-').map(Number)
+      return toISODate(new Date(y, m, 0)) // day 0 of next month = last day of this month
+    }
+    case 'quarterly': {
+      const [y, q] = key.split('-Q').map(Number)
+      return toISODate(new Date(y, q * 3, 0))
+    }
+    case 'halfyearly': {
+      const [y, h] = key.split('-H').map(Number)
+      return toISODate(new Date(y, h * 6, 0))
+    }
+  }
 }

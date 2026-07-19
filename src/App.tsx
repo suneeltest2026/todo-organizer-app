@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react'
 import type { Activity, AppSettings, ViewMode } from './types'
+import { PERIOD_LABELS, PERIOD_ORDER } from './types'
 import { loadActivities, loadSettings, saveActivities, saveSettings } from './storage'
 import ActivityForm from './components/ActivityForm'
 import ActivityList from './components/ActivityList'
 import StatusManager from './components/StatusManager'
 import ReminderSettings from './components/ReminderSettings'
 import GuidedEntry from './components/GuidedEntry'
+import PeriodSettings from './components/PeriodSettings'
 import { exportActivitiesToExcel } from './excelExport'
 import { useReminders } from './useReminders'
 import type { ReminderSettings as ReminderSettingsType } from './types'
@@ -16,9 +18,14 @@ type Tab = 'activities' | 'settings'
 function App() {
   const [activities, setActivities] = useState<Activity[]>(() => loadActivities())
   const [settings, setSettings] = useState<AppSettings>(() => loadSettings())
-  const [viewMode, setViewMode] = useState<ViewMode>(settings.defaultViewMode)
+  const [viewMode, setViewMode] = useState<ViewMode>(
+    settings.enabledPeriods.includes(settings.defaultViewMode)
+      ? settings.defaultViewMode
+      : settings.enabledPeriods[0],
+  )
   const [tab, setTab] = useState<Tab>('activities')
   const [guidedMode, setGuidedMode] = useState(false)
+  const visiblePeriods = PERIOD_ORDER.filter((p) => settings.enabledPeriods.includes(p))
 
   useEffect(() => {
     saveActivities(activities)
@@ -27,6 +34,12 @@ function App() {
   useEffect(() => {
     saveSettings(settings)
   }, [settings])
+
+  useEffect(() => {
+    if (!settings.enabledPeriods.includes(viewMode)) {
+      setViewMode(settings.enabledPeriods[0])
+    }
+  }, [settings.enabledPeriods, viewMode])
 
   useReminders(activities, settings.reminder)
 
@@ -60,6 +73,10 @@ function App() {
     setSettings((prev) => ({ ...prev, reminder }))
   }
 
+  function handleEnabledPeriodsChange(enabledPeriods: ViewMode[]) {
+    setSettings((prev) => ({ ...prev, enabledPeriods }))
+  }
+
   return (
     <div className="app">
       <header className="app__header">
@@ -76,23 +93,18 @@ function App() {
 
       {tab === 'activities' && (
         <main className="app__main">
-          <div className="app__view-toggle" role="tablist" aria-label="Daily or weekly view">
-            <button
-              role="tab"
-              aria-selected={viewMode === 'daily'}
-              className={viewMode === 'daily' ? 'is-active' : ''}
-              onClick={() => setViewMode('daily')}
-            >
-              Daily
-            </button>
-            <button
-              role="tab"
-              aria-selected={viewMode === 'weekly'}
-              className={viewMode === 'weekly' ? 'is-active' : ''}
-              onClick={() => setViewMode('weekly')}
-            >
-              Weekly
-            </button>
+          <div className="app__view-toggle" role="tablist" aria-label="Activity period view">
+            {visiblePeriods.map((period) => (
+              <button
+                key={period}
+                role="tab"
+                aria-selected={viewMode === period}
+                className={viewMode === period ? 'is-active' : ''}
+                onClick={() => setViewMode(period)}
+              >
+                {PERIOD_LABELS[period]}
+              </button>
+            ))}
           </div>
 
           <div className="app__entry-mode-toggle">
@@ -147,14 +159,26 @@ function App() {
           </section>
 
           <section className="app__settings-section">
+            <h2>Periods</h2>
+            <p className="app__settings-hint">
+              Choose which time periods you want to track activities by. Daily and Weekly are on by
+              default — turn on Bi-Weekly, Monthly, Quarterly, or Half-Yearly only if you need them.
+            </p>
+            <PeriodSettings enabledPeriods={settings.enabledPeriods} onChange={handleEnabledPeriodsChange} />
+          </section>
+
+          <section className="app__settings-section">
             <h2>Default view</h2>
-            <p className="app__settings-hint">Choose whether you prefer to log activities daily or weekly by default.</p>
+            <p className="app__settings-hint">Choose which period view opens by default.</p>
             <select
               value={settings.defaultViewMode}
               onChange={(e) => handleDefaultViewModeChange(e.target.value as ViewMode)}
             >
-              <option value="daily">Daily</option>
-              <option value="weekly">Weekly</option>
+              {visiblePeriods.map((period) => (
+                <option key={period} value={period}>
+                  {PERIOD_LABELS[period]}
+                </option>
+              ))}
             </select>
           </section>
 

@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { v4 as uuidv4 } from 'uuid'
 import type { Activity, ViewMode } from '../types'
+import { PERIOD_LABELS } from '../types'
 import UniversalInput from './UniversalInput'
-import { currentWeekStart, todayISO } from '../dateUtils'
+import { periodKeyFor, periodLabel, todayISO } from '../dateUtils'
 import './ActivityForm.css'
 
 interface ActivityFormProps {
@@ -16,7 +17,8 @@ export default function ActivityForm({ statuses, viewMode, onAdd }: ActivityForm
   const [notes, setNotes] = useState('')
   const [status, setStatus] = useState(statuses[0] ?? 'Not Started')
   const [date, setDate] = useState(todayISO())
-  const [weekStart, setWeekStart] = useState(currentWeekStart())
+
+  const periodKey = periodKeyFor(viewMode, date)
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -30,8 +32,8 @@ export default function ActivityForm({ statuses, viewMode, onAdd }: ActivityForm
       notes: notes.trim() || undefined,
       status: statuses.includes(status) ? status : statuses[0],
       period: viewMode,
-      date: viewMode === 'daily' ? date : weekStart,
-      weekStart: viewMode === 'weekly' ? weekStart : undefined,
+      date,
+      periodKey,
       createdAt: now,
       updatedAt: now,
     }
@@ -59,21 +61,15 @@ export default function ActivityForm({ statuses, viewMode, onAdd }: ActivityForm
           </select>
         </label>
 
-        {viewMode === 'daily' ? (
-          <label className="activity-form__field">
-            <span>Date</span>
-            <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
-          </label>
-        ) : (
-          <label className="activity-form__field">
-            <span>Week starting (Mon)</span>
-            <input
-              type="date"
-              value={weekStart}
-              onChange={(e) => setWeekStart(e.target.value)}
-            />
-          </label>
-        )}
+        <label className="activity-form__field">
+          <span>Date</span>
+          <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+          {viewMode !== 'daily' && (
+            <span className="activity-form__period-hint">
+              {PERIOD_LABELS[viewMode]} bucket: {periodLabel(viewMode, periodKey)}
+            </span>
+          )}
+        </label>
       </div>
 
       <button type="submit" className="activity-form__submit">
