@@ -56,6 +56,13 @@ export default function ActivityForm({ statuses, viewMode, activity, onSave }: A
     const trimmed = name.trim()
     if (!trimmed) return
 
+    // If the user typed a checklist step but never tapped "Add" (or saved straight
+    // from the keyboard), carry it into the saved list instead of silently dropping it.
+    const pendingSubtask = newSubtask.trim()
+    const finalSubtasks = pendingSubtask
+      ? [...subtasks, { id: uuidv4(), name: pendingSubtask, done: false }]
+      : subtasks
+
     const now = new Date().toISOString()
     const saved: Activity = {
       id: activity?.id ?? uuidv4(),
@@ -67,7 +74,7 @@ export default function ActivityForm({ statuses, viewMode, activity, onSave }: A
       time: time || undefined,
       priority: priority || undefined,
       recurrence: recurrence !== 'none' ? recurrence : undefined,
-      subtasks: subtasks.length > 0 ? subtasks : undefined,
+      subtasks: finalSubtasks.length > 0 ? finalSubtasks : undefined,
       periodKey,
       createdAt: activity?.createdAt ?? now,
       updatedAt: now,
