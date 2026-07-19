@@ -227,6 +227,7 @@ function App() {
         </div>
       </header>
 
+      <div className="app__content">
       {tab === 'activities' && (
         <main className="app__main">
           <div className="app__period-chips" role="tablist" aria-label="Activity period view">
@@ -358,6 +359,7 @@ function App() {
           </section>
         </main>
       )}
+      </div>
     </div>
   )
 }
