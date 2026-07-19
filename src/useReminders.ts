@@ -27,6 +27,14 @@ function dueDateFor(activity: Activity): string {
   return periodEndDate(activity.period, activity.periodKey)
 }
 
+/** The exact due moment for an activity — uses its own due time when set on a daily-period activity, otherwise end of the bucket's last day. */
+function dueMomentFor(activity: Activity): Date {
+  if (activity.period === 'daily' && activity.time) {
+    return new Date(`${activity.date}T${activity.time}:00`)
+  }
+  return endOfDay(dueDateFor(activity))
+}
+
 /** Runs a periodic check while the app is open and fires browser notifications per the reminder settings. */
 export function useReminders(activities: Activity[], reminder: ReminderSettings) {
   const firedRef = useRef<Set<string>>(loadFired())
@@ -59,8 +67,8 @@ export function useReminders(activities: Activity[], reminder: ReminderSettings)
           const due = dueDateFor(activity)
           const key = `due:${activity.id}:${due}`
           if (fired.has(key)) continue
-          const target = new Date(endOfDay(due).getTime() - reminder.minutesBeforeDue * 60_000)
-          const deadline = endOfDay(due)
+          const deadline = dueMomentFor(activity)
+          const target = new Date(deadline.getTime() - reminder.minutesBeforeDue * 60_000)
           if (now >= target && now <= deadline) {
             showNotification('Activity due soon', `"${activity.name}" is due today.`)
             fired.add(key)

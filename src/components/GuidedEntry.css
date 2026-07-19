@@ -58,6 +58,13 @@
   align-items: flex-start;
 }
 
+.guided-entry__field-group {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
 .guided-entry__field {
   display: flex;
   flex-direction: column;
@@ -66,6 +73,8 @@
   font-weight: 600;
   color: var(--text-secondary);
   width: 100%;
+  flex: 1;
+  min-width: 140px;
 }
 
 .guided-entry__field select,
