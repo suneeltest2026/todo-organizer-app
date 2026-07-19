@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
+import { v4 as uuidv4 } from 'uuid'
 import type { Activity, AppSettings, ViewMode, Workspace } from './types'
 import { DEFAULT_SETTINGS, PERIOD_LABELS, PERIOD_ORDER, WORKSPACE_LABELS, WORKSPACE_ORDER } from './types'
+import { advanceDate, periodKeyFor } from './dateUtils'
 import {
   clearCurrentProfile,
   loadActivities,
@@ -123,8 +125,43 @@ function App() {
   }
 
   function handleUpdateStatus(id: string, status: string) {
+    setActivities((prev) => {
+      const now = new Date().toISOString()
+      const updated = prev.map((a) => (a.id === id ? { ...a, status, updatedAt: now } : a))
+
+      const target = prev.find((a) => a.id === id)
+      const terminalStatus = settings.statuses[settings.statuses.length - 1]
+      const isRecurring = target?.recurrence && target.recurrence !== 'none'
+      if (target && isRecurring && status === terminalStatus) {
+        const nextDate = advanceDate(target.date, target.recurrence!)
+        const nextActivity: Activity = {
+          ...target,
+          id: uuidv4(),
+          status: settings.statuses[0] ?? target.status,
+          date: nextDate,
+          periodKey: periodKeyFor(target.period, nextDate),
+          subtasks: target.subtasks?.map((s) => ({ ...s, done: false })),
+          createdAt: now,
+          updatedAt: now,
+        }
+        return [...updated, nextActivity]
+      }
+
+      return updated
+    })
+  }
+
+  function handleToggleSubtask(activityId: string, subtaskId: string) {
     setActivities((prev) =>
-      prev.map((a) => (a.id === id ? { ...a, status, updatedAt: new Date().toISOString() } : a)),
+      prev.map((a) =>
+        a.id === activityId
+          ? {
+              ...a,
+              subtasks: a.subtasks?.map((s) => (s.id === subtaskId ? { ...s, done: !s.done } : s)),
+              updatedAt: new Date().toISOString(),
+            }
+          : a,
+      ),
     )
   }
 
@@ -250,6 +287,7 @@ function App() {
             viewMode={viewMode}
             onUpdateStatus={handleUpdateStatus}
             onDelete={handleDelete}
+            onToggleSubtask={handleToggleSubtask}
           />
 
           <button

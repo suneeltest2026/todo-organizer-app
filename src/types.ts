@@ -27,6 +27,34 @@ export const PERIOD_LABELS: Record<ViewMode, string> = {
   halfyearly: 'Half-Yearly',
 }
 
+export type Priority = 'low' | 'medium' | 'high' | 'urgent'
+
+export const PRIORITY_ORDER: Priority[] = ['low', 'medium', 'high', 'urgent']
+
+export const PRIORITY_LABELS: Record<Priority, string> = {
+  low: 'Low',
+  medium: 'Medium',
+  high: 'High',
+  urgent: 'Urgent',
+}
+
+export interface SubTask {
+  id: string
+  name: string
+  done: boolean
+}
+
+export type Recurrence = 'none' | 'daily' | 'weekly' | 'monthly'
+
+export const RECURRENCE_ORDER: Recurrence[] = ['none', 'daily', 'weekly', 'monthly']
+
+export const RECURRENCE_LABELS: Record<Recurrence, string> = {
+  none: 'Does not repeat',
+  daily: 'Repeats daily',
+  weekly: 'Repeats weekly',
+  monthly: 'Repeats monthly',
+}
+
 export interface Activity {
   id: string
   name: string
@@ -35,6 +63,12 @@ export interface Activity {
   period: ViewMode
   /** ISO date (yyyy-mm-dd) the user picked for this activity */
   date: string
+  /** Optional HH:mm due time, used to sharpen "before due" reminders for daily-period activities */
+  time?: string
+  priority?: Priority
+  subtasks?: SubTask[]
+  /** When set to something other than 'none', completing the activity creates its next occurrence */
+  recurrence?: Recurrence
   /** Bucket key derived from `date` + `period` — used for grouping (e.g. a week-start date, "2026-03", "2026-Q1") */
   periodKey: string
   createdAt: string

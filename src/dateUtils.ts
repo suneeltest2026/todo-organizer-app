@@ -1,4 +1,4 @@
-import type { ViewMode } from './types'
+import type { Recurrence, ViewMode } from './types'
 
 export function todayISO(): string {
   return toISODate(new Date())
@@ -9,6 +9,14 @@ export function toISODate(d: Date): string {
   const month = String(d.getMonth() + 1).padStart(2, '0')
   const day = String(d.getDate()).padStart(2, '0')
   return `${year}-${month}-${day}`
+}
+
+/** Formats a "HH:mm" 24-hour time string as a locale-friendly 12-hour label, e.g. "9:00 AM" */
+export function formatTimeLabel(time: string): string {
+  const [h, m] = time.split(':').map(Number)
+  const d = new Date()
+  d.setHours(h, m, 0, 0)
+  return d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
 }
 
 /** Returns the ISO date (yyyy-mm-dd) of the Monday of the week containing d */
@@ -103,6 +111,25 @@ export function periodLabel(period: ViewMode, key: string): string {
       return `${h === '1' ? 'H1 (Jan–Jun)' : 'H2 (Jul–Dec)'} ${y}`
     }
   }
+}
+
+/** Returns the next occurrence's ISO date for a recurring activity. */
+export function advanceDate(dateISO: string, recurrence: Recurrence): string {
+  const d = new Date(dateISO + 'T00:00:00')
+  switch (recurrence) {
+    case 'daily':
+      d.setDate(d.getDate() + 1)
+      break
+    case 'weekly':
+      d.setDate(d.getDate() + 7)
+      break
+    case 'monthly':
+      d.setMonth(d.getMonth() + 1)
+      break
+    case 'none':
+      break
+  }
+  return toISODate(d)
 }
 
 /** Returns the ISO date (yyyy-mm-dd) of the last day of the bucket — used for reminder due-date math. */

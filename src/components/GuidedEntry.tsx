@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { v4 as uuidv4 } from 'uuid'
-import type { Activity, ViewMode } from '../types'
-import { PERIOD_LABELS } from '../types'
+import type { Activity, Priority, Recurrence, ViewMode } from '../types'
+import { PERIOD_LABELS, PRIORITY_LABELS, PRIORITY_ORDER, RECURRENCE_LABELS, RECURRENCE_ORDER } from '../types'
 import UniversalInput from './UniversalInput'
 import { periodKeyFor, periodLabel, todayISO } from '../dateUtils'
 import { IconChevronLeft, IconChevronRight, IconPlus, IconX } from './icons'
@@ -14,12 +14,13 @@ interface GuidedEntryProps {
   onCancel: () => void
 }
 
-type StepId = 'name' | 'status' | 'date' | 'notes'
+type StepId = 'name' | 'status' | 'date' | 'repeat' | 'notes'
 
 const STEPS: { id: StepId; label: string; optional?: boolean }[] = [
   { id: 'name', label: 'Task name' },
-  { id: 'status', label: 'Status' },
-  { id: 'date', label: 'Date' },
+  { id: 'status', label: 'Status & priority' },
+  { id: 'date', label: 'Date & time' },
+  { id: 'repeat', label: 'Repeat', optional: true },
   { id: 'notes', label: 'Notes', optional: true },
 ]
 
@@ -27,7 +28,10 @@ export default function GuidedEntry({ statuses, viewMode, onAdd, onCancel }: Gui
   const [stepIndex, setStepIndex] = useState(0)
   const [name, setName] = useState('')
   const [status, setStatus] = useState(statuses[0] ?? 'Not Started')
+  const [priority, setPriority] = useState<Priority | ''>('')
   const [date, setDate] = useState(todayISO())
+  const [time, setTime] = useState('')
+  const [recurrence, setRecurrence] = useState<Recurrence>('none')
   const [notes, setNotes] = useState('')
 
   const step = STEPS[stepIndex]
@@ -49,6 +53,16 @@ export default function GuidedEntry({ statuses, viewMode, onAdd, onCancel }: Gui
     setStepIndex((i) => Math.max(0, i - 1))
   }
 
+  function resetForm() {
+    setStepIndex(0)
+    setName('')
+    setNotes('')
+    setStatus(statuses[0] ?? 'Not Started')
+    setPriority('')
+    setTime('')
+    setRecurrence('none')
+  }
+
   function submit() {
     const trimmed = name.trim()
     if (!trimmed) return
@@ -60,15 +74,15 @@ export default function GuidedEntry({ statuses, viewMode, onAdd, onCancel }: Gui
       status: statuses.includes(status) ? status : statuses[0],
       period: viewMode,
       date,
+      time: time || undefined,
+      priority: priority || undefined,
+      recurrence: recurrence !== 'none' ? recurrence : undefined,
       periodKey,
       createdAt: now,
       updatedAt: now,
     }
     onAdd(activity)
-    setStepIndex(0)
-    setName('')
-    setNotes('')
-    setStatus(statuses[0] ?? 'Not Started')
+    resetForm()
   }
 
   function handleAddMultiple(items: string[]) {
@@ -83,15 +97,15 @@ export default function GuidedEntry({ statuses, viewMode, onAdd, onCancel }: Gui
         status: statuses.includes(status) ? status : statuses[0],
         period: viewMode,
         date,
+        time: time || undefined,
+        priority: priority || undefined,
+        recurrence: recurrence !== 'none' ? recurrence : undefined,
         periodKey,
         createdAt: now,
         updatedAt: now,
       })
     }
-    setStepIndex(0)
-    setName('')
-    setNotes('')
-    setStatus(statuses[0] ?? 'Not Started')
+    resetForm()
   }
 
   return (
@@ -122,27 +136,59 @@ export default function GuidedEntry({ statuses, viewMode, onAdd, onCancel }: Gui
         )}
 
         {step.id === 'status' && (
-          <label className="guided-entry__field">
-            <span>Current status</span>
-            <select value={status} onChange={(e) => setStatus(e.target.value)}>
-              {statuses.map((s) => (
-                <option key={s} value={s}>
-                  {s}
-                </option>
-              ))}
-            </select>
-          </label>
+          <div className="guided-entry__field-group">
+            <label className="guided-entry__field">
+              <span>Current status</span>
+              <select value={status} onChange={(e) => setStatus(e.target.value)}>
+                {statuses.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="guided-entry__field">
+              <span>Priority</span>
+              <select value={priority} onChange={(e) => setPriority(e.target.value as Priority | '')}>
+                <option value="">No priority</option>
+                {PRIORITY_ORDER.map((p) => (
+                  <option key={p} value={p}>
+                    {PRIORITY_LABELS[p]}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
         )}
 
         {step.id === 'date' && (
+          <div className="guided-entry__field-group">
+            <label className="guided-entry__field">
+              <span>Date</span>
+              <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+              {viewMode !== 'daily' && (
+                <span className="guided-entry__period-hint">
+                  {PERIOD_LABELS[viewMode]} bucket: {periodLabel(viewMode, periodKey)}
+                </span>
+              )}
+            </label>
+            <label className="guided-entry__field">
+              <span>Due time (optional)</span>
+              <input type="time" value={time} onChange={(e) => setTime(e.target.value)} />
+            </label>
+          </div>
+        )}
+
+        {step.id === 'repeat' && (
           <label className="guided-entry__field">
-            <span>Date</span>
-            <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
-            {viewMode !== 'daily' && (
-              <span className="guided-entry__period-hint">
-                {PERIOD_LABELS[viewMode]} bucket: {periodLabel(viewMode, periodKey)}
-              </span>
-            )}
+            <span>Repeat</span>
+            <select value={recurrence} onChange={(e) => setRecurrence(e.target.value as Recurrence)}>
+              {RECURRENCE_ORDER.map((r) => (
+                <option key={r} value={r}>
+                  {RECURRENCE_LABELS[r]}
+                </option>
+              ))}
+            </select>
           </label>
         )}
 

@@ -197,6 +197,48 @@ export function IconLogOut(props: IconProps) {
   )
 }
 
+export function IconFlag(props: IconProps) {
+  return (
+    <Base {...props}>
+      <path d="M5.5 17V3.5" />
+      <path d="M5.5 4h8.2l-2 3.1 2 3.2H5.5" />
+    </Base>
+  )
+}
+
+export function IconRepeat(props: IconProps) {
+  return (
+    <Base {...props}>
+      <path d="M4.5 8a5.5 5.5 0 0 1 9.6-3.7" />
+      <path d="M14.1 2.6v2.8h-2.8" />
+      <path d="M15.5 12a5.5 5.5 0 0 1-9.6 3.7" />
+      <path d="M5.9 17.4v-2.8h2.8" />
+    </Base>
+  )
+}
+
+export function IconListChecks(props: IconProps) {
+  return (
+    <Base {...props}>
+      <path d="m4 5.5 1 1 1.8-1.8" />
+      <path d="M9.5 5.5h6.5" />
+      <path d="m4 10.5 1 1 1.8-1.8" />
+      <path d="M9.5 10.5h6.5" />
+      <path d="m4 15.5 1 1 1.8-1.8" />
+      <path d="M9.5 15.5h6.5" />
+    </Base>
+  )
+}
+
+export function IconClock(props: IconProps) {
+  return (
+    <Base {...props}>
+      <circle cx="10" cy="10" r="6.8" />
+      <path d="M10 6.3v3.9l2.7 1.8" />
+    </Base>
+  )
+}
+
 export function IconBell(props: IconProps) {
   return (
     <Base {...props}>
