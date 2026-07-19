@@ -44,9 +44,37 @@ export default function ActivityForm({ statuses, viewMode, onAdd }: ActivityForm
     setStatus(statuses[0] ?? 'Not Started')
   }
 
+  function handleAddMultiple(items: string[]) {
+    const now = new Date().toISOString()
+    for (const raw of items) {
+      const trimmed = raw.trim()
+      if (!trimmed) continue
+      onAdd({
+        id: uuidv4(),
+        name: trimmed,
+        notes: undefined,
+        status: statuses.includes(status) ? status : statuses[0],
+        period: viewMode,
+        date,
+        periodKey,
+        createdAt: now,
+        updatedAt: now,
+      })
+    }
+    setName('')
+    setNotes('')
+    setStatus(statuses[0] ?? 'Not Started')
+  }
+
   return (
     <form className="activity-form" onSubmit={handleSubmit}>
-      <UniversalInput label="Task / activity name" value={name} onChange={setName} placeholder="e.g. Finish quarterly report" />
+      <UniversalInput
+        label="Task / activity name"
+        value={name}
+        onChange={setName}
+        placeholder="e.g. Finish quarterly report"
+        onMultipleDetected={handleAddMultiple}
+      />
 
       <UniversalInput label="Notes (optional)" value={notes} onChange={setNotes} placeholder="Any extra detail…" multiline />
 

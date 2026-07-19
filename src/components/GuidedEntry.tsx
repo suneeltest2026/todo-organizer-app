@@ -71,6 +71,29 @@ export default function GuidedEntry({ statuses, viewMode, onAdd, onCancel }: Gui
     setStatus(statuses[0] ?? 'Not Started')
   }
 
+  function handleAddMultiple(items: string[]) {
+    const now = new Date().toISOString()
+    for (const raw of items) {
+      const trimmed = raw.trim()
+      if (!trimmed) continue
+      onAdd({
+        id: uuidv4(),
+        name: trimmed,
+        notes: undefined,
+        status: statuses.includes(status) ? status : statuses[0],
+        period: viewMode,
+        date,
+        periodKey,
+        createdAt: now,
+        updatedAt: now,
+      })
+    }
+    setStepIndex(0)
+    setName('')
+    setNotes('')
+    setStatus(statuses[0] ?? 'Not Started')
+  }
+
   return (
     <div className="guided-entry">
       <div className="guided-entry__header">
@@ -89,7 +112,13 @@ export default function GuidedEntry({ statuses, viewMode, onAdd, onCancel }: Gui
 
       <div className="guided-entry__body">
         {step.id === 'name' && (
-          <UniversalInput label="What's the task or activity?" value={name} onChange={setName} placeholder="e.g. Finish quarterly report" />
+          <UniversalInput
+            label="What's the task or activity?"
+            value={name}
+            onChange={setName}
+            placeholder="e.g. Finish quarterly report"
+            onMultipleDetected={handleAddMultiple}
+          />
         )}
 
         {step.id === 'status' && (
