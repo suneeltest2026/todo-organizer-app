@@ -18,6 +18,7 @@ import {
   saveWorkspace,
 } from './storage'
 import ActivityList from './components/ActivityList'
+import CalendarView from './components/CalendarView'
 import StatusManager from './components/StatusManager'
 import ReminderSettings from './components/ReminderSettings'
 import PeriodSettings from './components/PeriodSettings'
@@ -34,6 +35,7 @@ import {
   IconClipboardCheck,
   IconDownload,
   IconEye,
+  IconListChecks,
   IconLogOut,
   IconPlus,
   IconSliders,
@@ -43,6 +45,7 @@ import {
 import './App.css'
 
 type Tab = 'activities' | 'settings'
+type ListMode = 'list' | 'calendar'
 
 const WORKSPACE_ICONS: Record<Workspace, typeof IconUser> = {
   personal: IconUser,
@@ -66,6 +69,7 @@ function App() {
   )
   const [viewMode, setViewMode] = useState<ViewMode>(() => initialViewMode(settings))
   const [tab, setTab] = useState<Tab>('activities')
+  const [listMode, setListMode] = useState<ListMode>('list')
   const [sheetOpen, setSheetOpen] = useState(false)
   const [accountMenuOpen, setAccountMenuOpen] = useState(false)
   const visiblePeriods = PERIOD_ORDER.filter((p) => settings.enabledPeriods.includes(p))
@@ -267,28 +271,63 @@ function App() {
       <div className="app__content">
       {tab === 'activities' && (
         <main className="app__main">
-          <div className="app__period-chips" role="tablist" aria-label="Activity period view">
-            {visiblePeriods.map((period) => (
-              <button
-                key={period}
-                role="tab"
-                aria-selected={viewMode === period}
-                className={`app__period-chip ${viewMode === period ? 'is-active' : ''}`}
-                onClick={() => setViewMode(period)}
-              >
-                {PERIOD_LABELS[period]}
-              </button>
-            ))}
+          <div className="app__view-mode-toggle" role="tablist" aria-label="List or calendar view">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={listMode === 'list'}
+              className={listMode === 'list' ? 'is-active' : ''}
+              onClick={() => setListMode('list')}
+            >
+              <IconListChecks size={14} />
+              List
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={listMode === 'calendar'}
+              className={listMode === 'calendar' ? 'is-active' : ''}
+              onClick={() => setListMode('calendar')}
+            >
+              <IconCalendarRange size={14} />
+              Calendar
+            </button>
           </div>
 
-          <ActivityList
-            activities={activities}
-            statuses={settings.statuses}
-            viewMode={viewMode}
-            onUpdateStatus={handleUpdateStatus}
-            onDelete={handleDelete}
-            onToggleSubtask={handleToggleSubtask}
-          />
+          {listMode === 'list' ? (
+            <>
+              <div className="app__period-chips" role="tablist" aria-label="Activity period view">
+                {visiblePeriods.map((period) => (
+                  <button
+                    key={period}
+                    role="tab"
+                    aria-selected={viewMode === period}
+                    className={`app__period-chip ${viewMode === period ? 'is-active' : ''}`}
+                    onClick={() => setViewMode(period)}
+                  >
+                    {PERIOD_LABELS[period]}
+                  </button>
+                ))}
+              </div>
+
+              <ActivityList
+                activities={activities}
+                statuses={settings.statuses}
+                viewMode={viewMode}
+                onUpdateStatus={handleUpdateStatus}
+                onDelete={handleDelete}
+                onToggleSubtask={handleToggleSubtask}
+              />
+            </>
+          ) : (
+            <CalendarView
+              activities={activities}
+              statuses={settings.statuses}
+              onUpdateStatus={handleUpdateStatus}
+              onDelete={handleDelete}
+              onToggleSubtask={handleToggleSubtask}
+            />
+          )}
 
           <button
             type="button"
