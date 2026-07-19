@@ -178,6 +178,25 @@ export function IconBriefcase(props: IconProps) {
   )
 }
 
+export function IconMail(props: IconProps) {
+  return (
+    <Base {...props}>
+      <rect x="3" y="5" width="14" height="10" rx="1.5" />
+      <path d="m3.5 6 6.5 5 6.5-5" />
+    </Base>
+  )
+}
+
+export function IconLogOut(props: IconProps) {
+  return (
+    <Base {...props}>
+      <path d="M8 4H5.5A1.5 1.5 0 0 0 4 5.5v9A1.5 1.5 0 0 0 5.5 16H8" />
+      <path d="M12 13.5 15.5 10 12 6.5" />
+      <path d="M15.5 10h-8" />
+    </Base>
+  )
+}
+
 export function IconBell(props: IconProps) {
   return (
     <Base {...props}>

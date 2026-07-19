@@ -1,13 +1,27 @@
 import { useEffect, useState } from 'react'
 import type { Activity, AppSettings, ViewMode, Workspace } from './types'
-import { PERIOD_LABELS, PERIOD_ORDER, WORKSPACE_LABELS, WORKSPACE_ORDER, WORKSPACE_TAGLINES } from './types'
-import { loadActivities, loadSettings, loadWorkspace, saveActivities, saveSettings, saveWorkspace } from './storage'
+import { DEFAULT_SETTINGS, PERIOD_LABELS, PERIOD_ORDER, WORKSPACE_LABELS, WORKSPACE_ORDER, WORKSPACE_TAGLINES } from './types'
+import {
+  clearCurrentProfile,
+  loadActivities,
+  loadCurrentProfile,
+  loadKnownProfiles,
+  loadSettings,
+  loadWorkspace,
+  normalizeEmail,
+  rememberProfile,
+  saveActivities,
+  saveCurrentProfile,
+  saveSettings,
+  saveWorkspace,
+} from './storage'
 import ActivityForm from './components/ActivityForm'
 import ActivityList from './components/ActivityList'
 import StatusManager from './components/StatusManager'
 import ReminderSettings from './components/ReminderSettings'
 import GuidedEntry from './components/GuidedEntry'
 import PeriodSettings from './components/PeriodSettings'
+import ProfileGate from './components/ProfileGate'
 import { exportActivitiesToExcel } from './excelExport'
 import { useReminders } from './useReminders'
 import type { ReminderSettings as ReminderSettingsType } from './types'
@@ -18,6 +32,7 @@ import {
   IconClipboardCheck,
   IconDownload,
   IconEye,
+  IconLogOut,
   IconSliders,
   IconTag,
   IconUser,
@@ -38,21 +53,28 @@ function initialViewMode(settings: AppSettings): ViewMode {
 }
 
 function App() {
+  const [email, setEmail] = useState<string | null>(() => loadCurrentProfile())
   const [workspace, setWorkspace] = useState<Workspace>(() => loadWorkspace())
-  const [activities, setActivities] = useState<Activity[]>(() => loadActivities(workspace))
-  const [settings, setSettings] = useState<AppSettings>(() => loadSettings(workspace))
+  const [activities, setActivities] = useState<Activity[]>(() =>
+    email ? loadActivities(email, workspace) : [],
+  )
+  const [settings, setSettings] = useState<AppSettings>(() =>
+    email ? loadSettings(email, workspace) : DEFAULT_SETTINGS,
+  )
   const [viewMode, setViewMode] = useState<ViewMode>(() => initialViewMode(settings))
   const [tab, setTab] = useState<Tab>('activities')
   const [guidedMode, setGuidedMode] = useState(false)
   const visiblePeriods = PERIOD_ORDER.filter((p) => settings.enabledPeriods.includes(p))
 
   useEffect(() => {
-    saveActivities(workspace, activities)
-  }, [workspace, activities])
+    if (!email) return
+    saveActivities(email, workspace, activities)
+  }, [email, workspace, activities])
 
   useEffect(() => {
-    saveSettings(workspace, settings)
-  }, [workspace, settings])
+    if (!email) return
+    saveSettings(email, workspace, settings)
+  }, [email, workspace, settings])
 
   useEffect(() => {
     if (!settings.enabledPeriods.includes(viewMode)) {
@@ -62,11 +84,34 @@ function App() {
 
   useReminders(activities, settings.reminder)
 
+  function handleSignIn(rawEmail: string) {
+    const normalized = normalizeEmail(rawEmail)
+    if (!normalized) return
+    rememberProfile(normalized)
+    saveCurrentProfile(normalized)
+    const nextSettings = loadSettings(normalized, workspace)
+    setEmail(normalized)
+    setSettings(nextSettings)
+    setActivities(loadActivities(normalized, workspace))
+    setViewMode(initialViewMode(nextSettings))
+    setGuidedMode(false)
+    setTab('activities')
+  }
+
+  function handleSwitchProfile() {
+    clearCurrentProfile()
+    setEmail(null)
+    setActivities([])
+    setSettings(DEFAULT_SETTINGS)
+    setGuidedMode(false)
+    setTab('activities')
+  }
+
   function handleWorkspaceChange(next: Workspace) {
-    if (next === workspace) return
-    const nextSettings = loadSettings(next)
+    if (!email || next === workspace) return
+    const nextSettings = loadSettings(email, next)
     setWorkspace(next)
-    setActivities(loadActivities(next))
+    setActivities(loadActivities(email, next))
     setSettings(nextSettings)
     setViewMode(initialViewMode(nextSettings))
     setGuidedMode(false)
@@ -107,6 +152,10 @@ function App() {
     setSettings((prev) => ({ ...prev, enabledPeriods }))
   }
 
+  if (!email) {
+    return <ProfileGate knownProfiles={loadKnownProfiles()} onSignIn={handleSignIn} />
+  }
+
   return (
     <div className={`app app--${workspace}`}>
       <header className="app__header">
@@ -120,23 +169,40 @@ function App() {
               <span className="app__brand-tagline">{WORKSPACE_TAGLINES[workspace]}</span>
             </div>
           </div>
-          <nav className="app__workspace-switcher" role="tablist" aria-label="Workspace">
-            {WORKSPACE_ORDER.map((w) => {
-              const WorkspaceIcon = WORKSPACE_ICONS[w]
-              return (
-                <button
-                  key={w}
-                  role="tab"
-                  aria-selected={workspace === w}
-                  className={workspace === w ? 'is-active' : ''}
-                  onClick={() => handleWorkspaceChange(w)}
-                >
-                  <WorkspaceIcon size={15} />
-                  {WORKSPACE_LABELS[w]}
-                </button>
-              )
-            })}
-          </nav>
+          <div className="app__header-actions">
+            <nav className="app__workspace-switcher" role="tablist" aria-label="Workspace">
+              {WORKSPACE_ORDER.map((w) => {
+                const WorkspaceIcon = WORKSPACE_ICONS[w]
+                return (
+                  <button
+                    key={w}
+                    role="tab"
+                    aria-selected={workspace === w}
+                    className={workspace === w ? 'is-active' : ''}
+                    onClick={() => handleWorkspaceChange(w)}
+                  >
+                    <WorkspaceIcon size={15} />
+                    {WORKSPACE_LABELS[w]}
+                  </button>
+                )
+              })}
+            </nav>
+            <div className="app__account">
+              <span className="app__account-email" title={email}>
+                <IconUser size={13} />
+                {email}
+              </span>
+              <button
+                type="button"
+                className="icon-btn"
+                onClick={handleSwitchProfile}
+                aria-label="Switch profile"
+                title="Switch profile"
+              >
+                <IconLogOut size={15} />
+              </button>
+            </div>
+          </div>
         </div>
         <nav className="app__tabs" role="tablist" aria-label="Main navigation">
           <button
