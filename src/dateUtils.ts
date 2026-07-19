@@ -32,6 +32,27 @@ export function currentWeekStart(): string {
   return weekStartOf(new Date())
 }
 
+export const WEEKDAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+
+/** Returns a Monday-start 42-day grid (6 weeks) of ISO dates covering the given month, including lead/trail days from adjacent months. */
+export function getMonthGrid(year: number, month: number): string[] {
+  const firstOfMonth = new Date(year, month, 1)
+  const mondayIndex = (firstOfMonth.getDay() + 6) % 7 // 0 = Monday
+  const gridStart = new Date(year, month, 1 - mondayIndex)
+
+  const days: string[] = []
+  for (let i = 0; i < 42; i++) {
+    const d = new Date(gridStart)
+    d.setDate(gridStart.getDate() + i)
+    days.push(toISODate(d))
+  }
+  return days
+}
+
+export function formatMonthLabel(year: number, month: number): string {
+  return new Date(year, month, 1).toLocaleDateString(undefined, { month: 'long', year: 'numeric' })
+}
+
 export function formatWeekLabel(weekStartISO: string): string {
   const start = new Date(weekStartISO + 'T00:00:00')
   const end = new Date(start)

@@ -1,0 +1,209 @@
+.activity-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-xs);
+  padding: 0.8rem 1rem;
+  transition: box-shadow 0.15s ease, border-color 0.15s ease;
+  list-style: none;
+}
+
+.activity-card:hover {
+  box-shadow: var(--shadow-md);
+  border-color: var(--border-strong);
+}
+
+.activity-card__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.activity-card__main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.activity-card__title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.activity-card__priority-flag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.activity-card__priority-flag--low {
+  color: var(--text-tertiary);
+}
+
+.activity-card__priority-flag--medium {
+  color: var(--accent);
+}
+
+.activity-card__priority-flag--high {
+  color: var(--warning);
+}
+
+.activity-card__priority-flag--urgent {
+  color: var(--danger);
+}
+
+.activity-card__name {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.activity-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.activity-card__meta-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-tertiary);
+}
+
+.activity-card__notes {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.activity-card__controls {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-shrink: 0;
+}
+
+.activity-card__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.7rem 0.35rem 0.6rem;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text-primary);
+}
+
+.activity-card__status-dot {
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 50%;
+  background: var(--text-tertiary);
+  flex-shrink: 0;
+}
+
+.activity-card__status select {
+  border: none;
+  background: transparent;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: inherit;
+  cursor: pointer;
+  padding: 0;
+}
+
+.activity-card__status select:focus-visible {
+  outline: none;
+}
+
+.activity-card__status--done {
+  background: var(--success-soft);
+  color: var(--success);
+  border-color: transparent;
+}
+
+.activity-card__status--done .activity-card__status-dot {
+  background: var(--success);
+}
+
+.activity-card__status--in-progress {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-color: transparent;
+}
+
+.activity-card__status--in-progress .activity-card__status-dot {
+  background: var(--accent);
+}
+
+.activity-card__subtasks {
+  border-top: 1px solid var(--border);
+  padding-top: 0.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.activity-card__subtasks-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  align-self: flex-start;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+}
+
+.activity-card__subtasks-toggle:hover {
+  color: var(--accent);
+}
+
+.activity-card__subtasks-chevron {
+  transition: transform 0.15s ease;
+}
+
+.activity-card__subtasks-chevron.is-open {
+  transform: rotate(90deg);
+}
+
+.activity-card__subtask-checklist {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.activity-card__subtask-checklist label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+
+.activity-card__subtask-checklist input[type='checkbox'] {
+  flex-shrink: 0;
+}
+
+.activity-card__subtask-checklist .is-done {
+  color: var(--text-tertiary);
+  text-decoration: line-through;
+}

@@ -166,6 +166,41 @@
   gap: 1.25rem;
 }
 
+.app__view-mode-toggle {
+  display: flex;
+  gap: 0.25rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 0.25rem;
+  width: fit-content;
+}
+
+.app__view-mode-toggle button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border: none;
+  background: transparent;
+  padding: 0.45rem 0.9rem;
+  border-radius: calc(var(--radius-md) - 4px);
+  font-size: 0.85rem;
+  cursor: pointer;
+  color: var(--text-secondary);
+  font-weight: 600;
+  transition: color 0.12s ease, background-color 0.12s ease;
+}
+
+.app__view-mode-toggle button:hover:not(.is-active) {
+  color: var(--text-primary);
+}
+
+.app__view-mode-toggle button.is-active {
+  background: var(--surface-1);
+  color: var(--accent);
+  box-shadow: var(--shadow-xs);
+}
+
 .app__period-chips {
   display: flex;
   gap: 0.5rem;
