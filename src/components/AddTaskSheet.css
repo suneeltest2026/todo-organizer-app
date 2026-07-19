@@ -1,0 +1,114 @@
+.add-task-sheet__backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 12, 18, 0.5);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 50;
+  border: none;
+  padding: 0;
+  animation: add-task-fade 0.15s ease;
+}
+
+@keyframes add-task-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.add-task-sheet {
+  width: 100%;
+  max-width: 560px;
+  max-height: 88vh;
+  overflow-y: auto;
+  background: var(--surface-1);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  box-shadow: var(--shadow-lg);
+  padding: 0.75rem 1.25rem calc(1.5rem + env(safe-area-inset-bottom, 0px));
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  animation: add-task-slide-up 0.2s ease;
+}
+
+@keyframes add-task-slide-up {
+  from {
+    transform: translateY(16px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@media (min-width: 600px) {
+  .add-task-sheet__backdrop {
+    align-items: center;
+  }
+
+  .add-task-sheet {
+    max-height: 85vh;
+    border-radius: var(--radius-lg);
+  }
+}
+
+.add-task-sheet__grabber {
+  width: 2.5rem;
+  height: 4px;
+  border-radius: var(--radius-full);
+  background: var(--border-strong);
+  align-self: center;
+}
+
+@media (min-width: 600px) {
+  .add-task-sheet__grabber {
+    display: none;
+  }
+}
+
+.add-task-sheet__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.add-task-sheet__header h2 {
+  font-size: 1.1rem;
+  font-weight: 800;
+}
+
+.add-task-sheet__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* Strip the nested-card look from the reused form components — the sheet is the card now */
+.add-task-sheet__body .activity-form,
+.add-task-sheet__body .guided-entry {
+  border: none;
+  box-shadow: none;
+  padding: 0;
+  background: transparent;
+}
+
+.add-task-sheet__guided-link {
+  align-self: center;
+  border: none;
+  background: transparent;
+  color: var(--accent);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.3rem;
+}
+
+.add-task-sheet__guided-link:hover {
+  text-decoration: underline;
+}

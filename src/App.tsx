@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { Activity, AppSettings, ViewMode, Workspace } from './types'
-import { DEFAULT_SETTINGS, PERIOD_LABELS, PERIOD_ORDER, WORKSPACE_LABELS, WORKSPACE_ORDER, WORKSPACE_TAGLINES } from './types'
+import { DEFAULT_SETTINGS, PERIOD_LABELS, PERIOD_ORDER, WORKSPACE_LABELS, WORKSPACE_ORDER } from './types'
 import {
   clearCurrentProfile,
   loadActivities,
@@ -15,13 +15,12 @@ import {
   saveSettings,
   saveWorkspace,
 } from './storage'
-import ActivityForm from './components/ActivityForm'
 import ActivityList from './components/ActivityList'
 import StatusManager from './components/StatusManager'
 import ReminderSettings from './components/ReminderSettings'
-import GuidedEntry from './components/GuidedEntry'
 import PeriodSettings from './components/PeriodSettings'
 import ProfileGate from './components/ProfileGate'
+import AddTaskSheet from './components/AddTaskSheet'
 import { exportActivitiesToExcel } from './excelExport'
 import { useReminders } from './useReminders'
 import type { ReminderSettings as ReminderSettingsType } from './types'
@@ -29,10 +28,12 @@ import {
   IconBell,
   IconBriefcase,
   IconCalendarRange,
+  IconChevronLeft,
   IconClipboardCheck,
   IconDownload,
   IconEye,
   IconLogOut,
+  IconPlus,
   IconSliders,
   IconTag,
   IconUser,
@@ -63,7 +64,8 @@ function App() {
   )
   const [viewMode, setViewMode] = useState<ViewMode>(() => initialViewMode(settings))
   const [tab, setTab] = useState<Tab>('activities')
-  const [guidedMode, setGuidedMode] = useState(false)
+  const [sheetOpen, setSheetOpen] = useState(false)
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false)
   const visiblePeriods = PERIOD_ORDER.filter((p) => settings.enabledPeriods.includes(p))
 
   useEffect(() => {
@@ -94,7 +96,6 @@ function App() {
     setSettings(nextSettings)
     setActivities(loadActivities(normalized, workspace))
     setViewMode(initialViewMode(nextSettings))
-    setGuidedMode(false)
     setTab('activities')
   }
 
@@ -103,8 +104,8 @@ function App() {
     setEmail(null)
     setActivities([])
     setSettings(DEFAULT_SETTINGS)
-    setGuidedMode(false)
     setTab('activities')
+    setAccountMenuOpen(false)
   }
 
   function handleWorkspaceChange(next: Workspace) {
@@ -114,7 +115,6 @@ function App() {
     setActivities(loadActivities(email, next))
     setSettings(nextSettings)
     setViewMode(initialViewMode(nextSettings))
-    setGuidedMode(false)
     saveWorkspace(next)
   }
 
@@ -158,123 +158,89 @@ function App() {
 
   return (
     <div className={`app app--${workspace}`}>
-      <header className="app__header">
-        <div className="app__header-top">
-          <div className="app__brand">
-            <span className="app__brand-mark">
-              <IconClipboardCheck size={20} />
-            </span>
-            <div className="app__brand-text">
-              <h1>To-Do Organizer</h1>
-              <span className="app__brand-tagline">{WORKSPACE_TAGLINES[workspace]}</span>
-            </div>
-          </div>
-          <div className="app__header-actions">
-            <nav className="app__workspace-switcher" role="tablist" aria-label="Workspace">
-              {WORKSPACE_ORDER.map((w) => {
-                const WorkspaceIcon = WORKSPACE_ICONS[w]
-                return (
-                  <button
-                    key={w}
-                    role="tab"
-                    aria-selected={workspace === w}
-                    className={workspace === w ? 'is-active' : ''}
-                    onClick={() => handleWorkspaceChange(w)}
-                  >
-                    <WorkspaceIcon size={15} />
-                    {WORKSPACE_LABELS[w]}
-                  </button>
-                )
-              })}
-            </nav>
-            <div className="app__account">
-              <span className="app__account-email" title={email}>
-                <IconUser size={13} />
-                {email}
-              </span>
+      <header className="app__appbar">
+        <div className="app__appbar-row">
+          <span className="app__brand-mark app__brand-mark--sm">
+            <IconClipboardCheck size={17} />
+          </span>
+
+          <nav className="app__workspace-switcher" role="tablist" aria-label="Workspace">
+            {WORKSPACE_ORDER.map((w) => {
+              const WorkspaceIcon = WORKSPACE_ICONS[w]
+              return (
+                <button
+                  key={w}
+                  role="tab"
+                  aria-selected={workspace === w}
+                  className={workspace === w ? 'is-active' : ''}
+                  onClick={() => handleWorkspaceChange(w)}
+                >
+                  <WorkspaceIcon size={14} />
+                  <span className="app__ws-label">{WORKSPACE_LABELS[w]}</span>
+                </button>
+              )
+            })}
+          </nav>
+
+          <div className="app__appbar-actions">
+            <button
+              type="button"
+              className="icon-btn"
+              aria-label={tab === 'settings' ? 'Back to activities' : 'Settings'}
+              aria-pressed={tab === 'settings'}
+              onClick={() => setTab(tab === 'settings' ? 'activities' : 'settings')}
+            >
+              <IconSliders size={16} />
+            </button>
+            <div className="app__account-wrap">
               <button
                 type="button"
-                className="icon-btn"
-                onClick={handleSwitchProfile}
-                aria-label="Switch profile"
-                title="Switch profile"
+                className="app__avatar-btn"
+                onClick={() => setAccountMenuOpen((v) => !v)}
+                aria-label="Account menu"
               >
-                <IconLogOut size={15} />
+                {email.charAt(0).toUpperCase()}
               </button>
+              {accountMenuOpen && (
+                <>
+                  <button
+                    type="button"
+                    className="app__popover-backdrop"
+                    aria-label="Close menu"
+                    onClick={() => setAccountMenuOpen(false)}
+                  />
+                  <div className="app__account-popover">
+                    <span className="app__account-popover-email">{email}</span>
+                    <button
+                      type="button"
+                      className="btn btn-secondary btn-sm"
+                      onClick={handleSwitchProfile}
+                    >
+                      <IconLogOut size={14} />
+                      Switch profile
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>
-        <nav className="app__tabs" role="tablist" aria-label="Main navigation">
-          <button
-            role="tab"
-            aria-selected={tab === 'activities'}
-            className={tab === 'activities' ? 'is-active' : ''}
-            onClick={() => setTab('activities')}
-          >
-            <IconClipboardCheck size={16} />
-            Activities
-          </button>
-          <button
-            role="tab"
-            aria-selected={tab === 'settings'}
-            className={tab === 'settings' ? 'is-active' : ''}
-            onClick={() => setTab('settings')}
-          >
-            <IconSliders size={16} />
-            Settings
-          </button>
-        </nav>
       </header>
 
       {tab === 'activities' && (
         <main className="app__main">
-          <div className="app__view-toggle" role="tablist" aria-label="Activity period view">
+          <div className="app__period-chips" role="tablist" aria-label="Activity period view">
             {visiblePeriods.map((period) => (
               <button
                 key={period}
                 role="tab"
                 aria-selected={viewMode === period}
-                className={viewMode === period ? 'is-active' : ''}
+                className={`app__period-chip ${viewMode === period ? 'is-active' : ''}`}
                 onClick={() => setViewMode(period)}
               >
                 {PERIOD_LABELS[period]}
               </button>
             ))}
-          </div>
-
-          <div className="app__entry-mode-toggle">
-            <label>
-              <input
-                type="checkbox"
-                className="switch"
-                checked={guidedMode}
-                onChange={(e) => setGuidedMode(e.target.checked)}
-              />
-              Use guided step-by-step entry
-            </label>
-          </div>
-
-          {guidedMode ? (
-            <GuidedEntry
-              statuses={settings.statuses}
-              viewMode={viewMode}
-              onAdd={handleAdd}
-              onCancel={() => setGuidedMode(false)}
-            />
-          ) : (
-            <ActivityForm statuses={settings.statuses} viewMode={viewMode} onAdd={handleAdd} />
-          )}
-
-          <div className="app__export-row">
-            <button
-              type="button"
-              className="btn btn-secondary"
-              onClick={handleExport}
-              disabled={activities.length === 0}
-            >
-              <IconDownload size={16} />
-              Download as Excel
-            </button>
           </div>
 
           <ActivityList
@@ -284,11 +250,35 @@ function App() {
             onUpdateStatus={handleUpdateStatus}
             onDelete={handleDelete}
           />
+
+          <button
+            type="button"
+            className="app__fab"
+            onClick={() => setSheetOpen(true)}
+            aria-label="Add task"
+          >
+            <IconPlus size={22} />
+          </button>
+
+          {sheetOpen && (
+            <AddTaskSheet
+              statuses={settings.statuses}
+              viewMode={viewMode}
+              onAdd={handleAdd}
+              onClose={() => setSheetOpen(false)}
+            />
+          )}
         </main>
       )}
 
       {tab === 'settings' && (
         <main className="app__main">
+          <button type="button" className="app__back-btn" onClick={() => setTab('activities')}>
+            <IconChevronLeft size={16} />
+            Back
+          </button>
+          <h1 className="app__settings-title">Settings</h1>
+
           <section className="app__settings-section">
             <div className="section-heading">
               <span className="section-heading__icon">
@@ -346,6 +336,25 @@ function App() {
               app to be open in a tab.
             </p>
             <ReminderSettings reminder={settings.reminder} onChange={handleReminderChange} />
+          </section>
+
+          <section className="app__settings-section">
+            <div className="section-heading">
+              <span className="section-heading__icon">
+                <IconDownload size={16} />
+              </span>
+              <h2>Export data</h2>
+            </div>
+            <p className="app__settings-hint">Download all of this workspace's activities as an Excel file.</p>
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={handleExport}
+              disabled={activities.length === 0}
+            >
+              <IconDownload size={16} />
+              Download as Excel
+            </button>
           </section>
         </main>
       )}
