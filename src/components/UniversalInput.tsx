@@ -3,6 +3,7 @@ import type { ChangeEvent } from 'react'
 import './UniversalInput.css'
 import { recognizeImageText } from '../ocr'
 import { useSpeechToText } from '../useSpeechToText'
+import { IconCamera, IconKeyboard, IconMic, IconStop } from './icons'
 
 type Mode = 'type' | 'photo' | 'voice'
 
@@ -78,7 +79,8 @@ export default function UniversalInput({
           onClick={() => setMode('type')}
           disabled={disabled}
         >
-          ⌨️ Type
+          <IconKeyboard size={15} />
+          Type
         </button>
         <button
           type="button"
@@ -88,7 +90,8 @@ export default function UniversalInput({
           onClick={() => setMode('photo')}
           disabled={disabled}
         >
-          📷 Photo
+          <IconCamera size={15} />
+          Photo
         </button>
         <button
           type="button"
@@ -98,7 +101,8 @@ export default function UniversalInput({
           onClick={() => setMode('voice')}
           disabled={disabled}
         >
-          🎤 Voice
+          <IconMic size={15} />
+          Voice
         </button>
       </div>
 
@@ -140,7 +144,17 @@ export default function UniversalInput({
                 onClick={() => (listening ? stopListening() : startListening())}
                 disabled={disabled}
               >
-                {listening ? '⏹ Stop recording' : '🎙 Start recording'}
+                {listening ? (
+                  <>
+                    <IconStop size={15} />
+                    Stop recording
+                  </>
+                ) : (
+                  <>
+                    <IconMic size={15} />
+                    Start recording
+                  </>
+                )}
               </button>
             ) : (
               <p className="universal-input__error">

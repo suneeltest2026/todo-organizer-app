@@ -1,11 +1,12 @@
 .guided-entry {
   display: flex;
   flex-direction: column;
-  gap: 0.9rem;
+  gap: 1rem;
   background: var(--surface-1);
   border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 1.1rem;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: 1.35rem 1.4rem;
 }
 
 .guided-entry__header {
@@ -16,30 +17,38 @@
 }
 
 .guided-entry__step-label {
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   font-weight: 700;
   color: var(--text-secondary);
 }
 
 .guided-entry__cancel {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
   border: none;
   background: transparent;
   color: var(--text-secondary);
-  font-size: 0.8rem;
+  font-size: 0.78rem;
+  font-weight: 600;
   cursor: pointer;
-  text-decoration: underline;
+}
+
+.guided-entry__cancel:hover {
+  color: var(--danger);
 }
 
 .guided-entry__progress-track {
-  height: 8px;
-  border-radius: 999px;
+  height: 6px;
+  border-radius: var(--radius-full);
   background: var(--surface-2);
   overflow: hidden;
 }
 
 .guided-entry__progress-fill {
   height: 100%;
-  background: var(--accent);
+  background: linear-gradient(90deg, var(--accent) 0%, var(--accent-2) 100%);
+  border-radius: var(--radius-full);
   transition: width 0.25s ease;
 }
 
@@ -52,8 +61,8 @@
 .guided-entry__field {
   display: flex;
   flex-direction: column;
-  gap: 0.3rem;
-  font-size: 0.85rem;
+  gap: 0.35rem;
+  font-size: 0.82rem;
   font-weight: 600;
   color: var(--text-secondary);
   width: 100%;
@@ -62,16 +71,24 @@
 .guided-entry__field select,
 .guided-entry__field input {
   font-weight: 400;
-  padding: 0.55rem 0.7rem;
+  padding: 0.6rem 0.75rem;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   background: var(--surface-1);
   color: var(--text-primary);
   font-size: 0.95rem;
+  transition: border-color 0.12s ease, box-shadow 0.12s ease;
+}
+
+.guided-entry__field select:focus-visible,
+.guided-entry__field input:focus-visible {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--focus-ring);
+  outline: none;
 }
 
 .guided-entry__period-hint {
-  font-weight: 400;
+  font-weight: 500;
   font-size: 0.78rem;
   color: var(--accent);
 }
@@ -82,34 +99,6 @@
   gap: 0.6rem;
 }
 
-.guided-entry__back,
 .guided-entry__next {
-  padding: 0.55rem 1.1rem;
-  border-radius: 8px;
-  font-size: 0.9rem;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.guided-entry__back {
-  border: 1px solid var(--border);
-  background: var(--surface-2);
-  color: var(--text-primary);
-}
-
-.guided-entry__back:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.guided-entry__next {
-  border: none;
-  background: var(--accent);
-  color: var(--accent-contrast);
   margin-left: auto;
-}
-
-.guided-entry__next:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
 }

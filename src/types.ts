@@ -1,3 +1,19 @@
+export type Workspace = 'personal' | 'professional'
+
+export const WORKSPACE_ORDER: Workspace[] = ['personal', 'professional']
+
+export const WORKSPACE_LABELS: Record<Workspace, string> = {
+  personal: 'Personal',
+  professional: 'Professional',
+}
+
+export const WORKSPACE_TAGLINES: Record<Workspace, string> = {
+  personal: 'Your personal tasks & goals',
+  professional: 'Your work tasks & projects',
+}
+
+export const DEFAULT_WORKSPACE: Workspace = 'personal'
+
 export type ViewMode = 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'quarterly' | 'halfyearly'
 
 export const PERIOD_ORDER: ViewMode[] = ['daily', 'weekly', 'biweekly', 'monthly', 'quarterly', 'halfyearly']

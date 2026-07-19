@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { IconPlus, IconX } from './icons'
 import './StatusManager.css'
 
 interface StatusManagerProps {
@@ -39,13 +40,13 @@ export default function StatusManager({ statuses, onChange }: StatusManagerProps
             />
             <button
               type="button"
-              className="status-manager__remove"
+              className="icon-btn"
               onClick={() => removeStatus(status)}
               disabled={statuses.length <= 1}
               aria-label={`Remove status ${status}`}
               title={statuses.length <= 1 ? 'At least one status is required' : 'Remove status'}
             >
-              ✕
+              <IconX size={14} />
             </button>
           </li>
         ))}
@@ -58,7 +59,8 @@ export default function StatusManager({ statuses, onChange }: StatusManagerProps
           onChange={(e) => setNewStatus(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && addStatus()}
         />
-        <button type="button" className="status-manager__add-btn" onClick={addStatus}>
+        <button type="button" className="btn btn-primary btn-sm status-manager__add-btn" onClick={addStatus}>
+          <IconPlus size={15} />
           Add
         </button>
       </div>

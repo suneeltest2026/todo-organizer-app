@@ -1,39 +1,80 @@
 import { useEffect, useState } from 'react'
-import type { Activity, AppSettings, ViewMode } from './types'
-import { PERIOD_LABELS, PERIOD_ORDER } from './types'
-import { loadActivities, loadSettings, saveActivities, saveSettings } from './storage'
+import type { Activity, AppSettings, ViewMode, Workspace } from './types'
+import { DEFAULT_SETTINGS, PERIOD_LABELS, PERIOD_ORDER, WORKSPACE_LABELS, WORKSPACE_ORDER, WORKSPACE_TAGLINES } from './types'
+import {
+  clearCurrentProfile,
+  loadActivities,
+  loadCurrentProfile,
+  loadKnownProfiles,
+  loadSettings,
+  loadWorkspace,
+  normalizeEmail,
+  rememberProfile,
+  saveActivities,
+  saveCurrentProfile,
+  saveSettings,
+  saveWorkspace,
+} from './storage'
 import ActivityForm from './components/ActivityForm'
 import ActivityList from './components/ActivityList'
 import StatusManager from './components/StatusManager'
 import ReminderSettings from './components/ReminderSettings'
 import GuidedEntry from './components/GuidedEntry'
 import PeriodSettings from './components/PeriodSettings'
+import ProfileGate from './components/ProfileGate'
 import { exportActivitiesToExcel } from './excelExport'
 import { useReminders } from './useReminders'
 import type { ReminderSettings as ReminderSettingsType } from './types'
+import {
+  IconBell,
+  IconBriefcase,
+  IconCalendarRange,
+  IconClipboardCheck,
+  IconDownload,
+  IconEye,
+  IconLogOut,
+  IconSliders,
+  IconTag,
+  IconUser,
+} from './components/icons'
 import './App.css'
 
 type Tab = 'activities' | 'settings'
 
+const WORKSPACE_ICONS: Record<Workspace, typeof IconUser> = {
+  personal: IconUser,
+  professional: IconBriefcase,
+}
+
+function initialViewMode(settings: AppSettings): ViewMode {
+  return settings.enabledPeriods.includes(settings.defaultViewMode)
+    ? settings.defaultViewMode
+    : settings.enabledPeriods[0]
+}
+
 function App() {
-  const [activities, setActivities] = useState<Activity[]>(() => loadActivities())
-  const [settings, setSettings] = useState<AppSettings>(() => loadSettings())
-  const [viewMode, setViewMode] = useState<ViewMode>(
-    settings.enabledPeriods.includes(settings.defaultViewMode)
-      ? settings.defaultViewMode
-      : settings.enabledPeriods[0],
+  const [email, setEmail] = useState<string | null>(() => loadCurrentProfile())
+  const [workspace, setWorkspace] = useState<Workspace>(() => loadWorkspace())
+  const [activities, setActivities] = useState<Activity[]>(() =>
+    email ? loadActivities(email, workspace) : [],
   )
+  const [settings, setSettings] = useState<AppSettings>(() =>
+    email ? loadSettings(email, workspace) : DEFAULT_SETTINGS,
+  )
+  const [viewMode, setViewMode] = useState<ViewMode>(() => initialViewMode(settings))
   const [tab, setTab] = useState<Tab>('activities')
   const [guidedMode, setGuidedMode] = useState(false)
   const visiblePeriods = PERIOD_ORDER.filter((p) => settings.enabledPeriods.includes(p))
 
   useEffect(() => {
-    saveActivities(activities)
-  }, [activities])
+    if (!email) return
+    saveActivities(email, workspace, activities)
+  }, [email, workspace, activities])
 
   useEffect(() => {
-    saveSettings(settings)
-  }, [settings])
+    if (!email) return
+    saveSettings(email, workspace, settings)
+  }, [email, workspace, settings])
 
   useEffect(() => {
     if (!settings.enabledPeriods.includes(viewMode)) {
@@ -42,6 +83,40 @@ function App() {
   }, [settings.enabledPeriods, viewMode])
 
   useReminders(activities, settings.reminder)
+
+  function handleSignIn(rawEmail: string) {
+    const normalized = normalizeEmail(rawEmail)
+    if (!normalized) return
+    rememberProfile(normalized)
+    saveCurrentProfile(normalized)
+    const nextSettings = loadSettings(normalized, workspace)
+    setEmail(normalized)
+    setSettings(nextSettings)
+    setActivities(loadActivities(normalized, workspace))
+    setViewMode(initialViewMode(nextSettings))
+    setGuidedMode(false)
+    setTab('activities')
+  }
+
+  function handleSwitchProfile() {
+    clearCurrentProfile()
+    setEmail(null)
+    setActivities([])
+    setSettings(DEFAULT_SETTINGS)
+    setGuidedMode(false)
+    setTab('activities')
+  }
+
+  function handleWorkspaceChange(next: Workspace) {
+    if (!email || next === workspace) return
+    const nextSettings = loadSettings(email, next)
+    setWorkspace(next)
+    setActivities(loadActivities(email, next))
+    setSettings(nextSettings)
+    setViewMode(initialViewMode(nextSettings))
+    setGuidedMode(false)
+    saveWorkspace(next)
+  }
 
   function handleAdd(activity: Activity) {
     setActivities((prev) => [...prev, activity])
@@ -66,7 +141,7 @@ function App() {
   }
 
   function handleExport() {
-    exportActivitiesToExcel(activities)
+    exportActivitiesToExcel(activities, `${workspace}-activities.xlsx`)
   }
 
   function handleReminderChange(reminder: ReminderSettingsType) {
@@ -77,15 +152,75 @@ function App() {
     setSettings((prev) => ({ ...prev, enabledPeriods }))
   }
 
+  if (!email) {
+    return <ProfileGate knownProfiles={loadKnownProfiles()} onSignIn={handleSignIn} />
+  }
+
   return (
-    <div className="app">
+    <div className={`app app--${workspace}`}>
       <header className="app__header">
-        <h1>To-Do Organizer</h1>
-        <nav className="app__tabs">
-          <button className={tab === 'activities' ? 'is-active' : ''} onClick={() => setTab('activities')}>
+        <div className="app__header-top">
+          <div className="app__brand">
+            <span className="app__brand-mark">
+              <IconClipboardCheck size={20} />
+            </span>
+            <div className="app__brand-text">
+              <h1>To-Do Organizer</h1>
+              <span className="app__brand-tagline">{WORKSPACE_TAGLINES[workspace]}</span>
+            </div>
+          </div>
+          <div className="app__header-actions">
+            <nav className="app__workspace-switcher" role="tablist" aria-label="Workspace">
+              {WORKSPACE_ORDER.map((w) => {
+                const WorkspaceIcon = WORKSPACE_ICONS[w]
+                return (
+                  <button
+                    key={w}
+                    role="tab"
+                    aria-selected={workspace === w}
+                    className={workspace === w ? 'is-active' : ''}
+                    onClick={() => handleWorkspaceChange(w)}
+                  >
+                    <WorkspaceIcon size={15} />
+                    {WORKSPACE_LABELS[w]}
+                  </button>
+                )
+              })}
+            </nav>
+            <div className="app__account">
+              <span className="app__account-email" title={email}>
+                <IconUser size={13} />
+                {email}
+              </span>
+              <button
+                type="button"
+                className="icon-btn"
+                onClick={handleSwitchProfile}
+                aria-label="Switch profile"
+                title="Switch profile"
+              >
+                <IconLogOut size={15} />
+              </button>
+            </div>
+          </div>
+        </div>
+        <nav className="app__tabs" role="tablist" aria-label="Main navigation">
+          <button
+            role="tab"
+            aria-selected={tab === 'activities'}
+            className={tab === 'activities' ? 'is-active' : ''}
+            onClick={() => setTab('activities')}
+          >
+            <IconClipboardCheck size={16} />
             Activities
           </button>
-          <button className={tab === 'settings' ? 'is-active' : ''} onClick={() => setTab('settings')}>
+          <button
+            role="tab"
+            aria-selected={tab === 'settings'}
+            className={tab === 'settings' ? 'is-active' : ''}
+            onClick={() => setTab('settings')}
+          >
+            <IconSliders size={16} />
             Settings
           </button>
         </nav>
@@ -111,6 +246,7 @@ function App() {
             <label>
               <input
                 type="checkbox"
+                className="switch"
                 checked={guidedMode}
                 onChange={(e) => setGuidedMode(e.target.checked)}
               />
@@ -132,11 +268,12 @@ function App() {
           <div className="app__export-row">
             <button
               type="button"
-              className="app__export-btn"
+              className="btn btn-secondary"
               onClick={handleExport}
               disabled={activities.length === 0}
             >
-              ⬇ Download as Excel
+              <IconDownload size={16} />
+              Download as Excel
             </button>
           </div>
 
@@ -153,13 +290,23 @@ function App() {
       {tab === 'settings' && (
         <main className="app__main">
           <section className="app__settings-section">
-            <h2>Statuses</h2>
+            <div className="section-heading">
+              <span className="section-heading__icon">
+                <IconTag size={16} />
+              </span>
+              <h2>Statuses</h2>
+            </div>
             <p className="app__settings-hint">Customize the statuses available for your activities.</p>
             <StatusManager statuses={settings.statuses} onChange={handleStatusesChange} />
           </section>
 
           <section className="app__settings-section">
-            <h2>Periods</h2>
+            <div className="section-heading">
+              <span className="section-heading__icon">
+                <IconCalendarRange size={16} />
+              </span>
+              <h2>Periods</h2>
+            </div>
             <p className="app__settings-hint">
               Choose which time periods you want to track activities by. Daily and Weekly are on by
               default — turn on Bi-Weekly, Monthly, Quarterly, or Half-Yearly only if you need them.
@@ -168,7 +315,12 @@ function App() {
           </section>
 
           <section className="app__settings-section">
-            <h2>Default view</h2>
+            <div className="section-heading">
+              <span className="section-heading__icon">
+                <IconEye size={16} />
+              </span>
+              <h2>Default view</h2>
+            </div>
             <p className="app__settings-hint">Choose which period view opens by default.</p>
             <select
               value={settings.defaultViewMode}
@@ -183,7 +335,12 @@ function App() {
           </section>
 
           <section className="app__settings-section">
-            <h2>Reminders</h2>
+            <div className="section-heading">
+              <span className="section-heading__icon">
+                <IconBell size={16} />
+              </span>
+              <h2>Reminders</h2>
+            </div>
             <p className="app__settings-hint">
               Get a browser notification daily at a set time, or before a task's due date. Requires this
               app to be open in a tab.

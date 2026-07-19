@@ -4,6 +4,7 @@ import type { Activity, ViewMode } from '../types'
 import { PERIOD_LABELS } from '../types'
 import UniversalInput from './UniversalInput'
 import { periodKeyFor, periodLabel, todayISO } from '../dateUtils'
+import { IconPlus } from './icons'
 import './ActivityForm.css'
 
 interface ActivityFormProps {
@@ -72,7 +73,8 @@ export default function ActivityForm({ statuses, viewMode, onAdd }: ActivityForm
         </label>
       </div>
 
-      <button type="submit" className="activity-form__submit">
+      <button type="submit" className="btn btn-primary activity-form__submit">
+        <IconPlus size={16} />
         Add activity
       </button>
     </form>
