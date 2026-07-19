@@ -8,15 +8,18 @@ import './AddTaskSheet.css'
 interface AddTaskSheetProps {
   statuses: string[]
   viewMode: ViewMode
-  onAdd: (activity: Activity) => void
+  /** When provided, the sheet edits this activity in place instead of creating a new one. */
+  activity?: Activity
+  onSave: (activity: Activity) => void
   onClose: () => void
 }
 
-export default function AddTaskSheet({ statuses, viewMode, onAdd, onClose }: AddTaskSheetProps) {
+export default function AddTaskSheet({ statuses, viewMode, activity, onSave, onClose }: AddTaskSheetProps) {
   const [guidedMode, setGuidedMode] = useState(false)
+  const isEditing = !!activity
 
-  function handleAdd(activity: Activity) {
-    onAdd(activity)
+  function handleSave(saved: Activity) {
+    onSave(saved)
     onClose()
   }
 
@@ -27,34 +30,36 @@ export default function AddTaskSheet({ statuses, viewMode, onAdd, onClose }: Add
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
-        aria-label="Add task"
+        aria-label={isEditing ? 'Edit task' : 'Add task'}
       >
         <div className="add-task-sheet__grabber" />
         <div className="add-task-sheet__header">
-          <h2>New task</h2>
+          <h2>{isEditing ? 'Edit task' : 'New task'}</h2>
           <button type="button" className="icon-btn" onClick={onClose} aria-label="Close">
             <IconX size={16} />
           </button>
         </div>
 
         <div className="add-task-sheet__body">
-          {guidedMode ? (
+          {!isEditing && guidedMode ? (
             <GuidedEntry
               statuses={statuses}
               viewMode={viewMode}
-              onAdd={handleAdd}
+              onAdd={handleSave}
               onCancel={() => setGuidedMode(false)}
             />
           ) : (
             <>
-              <ActivityForm statuses={statuses} viewMode={viewMode} onAdd={handleAdd} />
-              <button
-                type="button"
-                className="add-task-sheet__guided-link"
-                onClick={() => setGuidedMode(true)}
-              >
-                Use guided step-by-step entry instead
-              </button>
+              <ActivityForm statuses={statuses} viewMode={viewMode} activity={activity} onSave={handleSave} />
+              {!isEditing && (
+                <button
+                  type="button"
+                  className="add-task-sheet__guided-link"
+                  onClick={() => setGuidedMode(true)}
+                >
+                  Use guided step-by-step entry instead
+                </button>
+              )}
             </>
           )}
         </div>

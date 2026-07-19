@@ -10,6 +10,7 @@ interface ActivityListProps {
   onUpdateStatus: (id: string, status: string) => void
   onDelete: (id: string) => void
   onToggleSubtask: (activityId: string, subtaskId: string) => void
+  onEdit: (activity: Activity) => void
 }
 
 export default function ActivityList({
@@ -19,6 +20,7 @@ export default function ActivityList({
   onUpdateStatus,
   onDelete,
   onToggleSubtask,
+  onEdit,
 }: ActivityListProps) {
   const relevant = activities.filter((a) => a.period === viewMode)
 
@@ -53,6 +55,7 @@ export default function ActivityList({
                 onUpdateStatus={onUpdateStatus}
                 onDelete={onDelete}
                 onToggleSubtask={onToggleSubtask}
+                onEdit={onEdit}
               />
             ))}
           </ul>

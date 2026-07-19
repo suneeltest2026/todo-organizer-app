@@ -11,6 +11,7 @@ interface CalendarViewProps {
   onUpdateStatus: (id: string, status: string) => void
   onDelete: (id: string) => void
   onToggleSubtask: (activityId: string, subtaskId: string) => void
+  onEdit: (activity: Activity) => void
 }
 
 export default function CalendarView({
@@ -19,6 +20,7 @@ export default function CalendarView({
   onUpdateStatus,
   onDelete,
   onToggleSubtask,
+  onEdit,
 }: CalendarViewProps) {
   const today = todayISO()
   const [cursor, setCursor] = useState(() => {
@@ -127,6 +129,7 @@ export default function CalendarView({
                 onUpdateStatus={onUpdateStatus}
                 onDelete={onDelete}
                 onToggleSubtask={onToggleSubtask}
+                onEdit={onEdit}
               />
             ))}
           </ul>

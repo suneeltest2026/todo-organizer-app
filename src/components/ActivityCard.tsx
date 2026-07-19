@@ -11,6 +11,7 @@ interface ActivityCardProps {
   onUpdateStatus: (id: string, status: string) => void
   onDelete: (id: string) => void
   onToggleSubtask: (activityId: string, subtaskId: string) => void
+  onEdit: (activity: Activity) => void
 }
 
 const PRIORITY_CLASS: Record<Priority, string> = {
@@ -26,6 +27,7 @@ export default function ActivityCard({
   onUpdateStatus,
   onDelete,
   onToggleSubtask,
+  onEdit,
 }: ActivityCardProps) {
   const [isExpanded, setIsExpanded] = useState(false)
   const subtasks = activity.subtasks ?? []
@@ -34,7 +36,12 @@ export default function ActivityCard({
   return (
     <li className="activity-card">
       <div className="activity-card__row">
-        <div className="activity-card__main">
+        <button
+          type="button"
+          className="activity-card__main"
+          onClick={() => onEdit(activity)}
+          aria-label={`Edit ${activity.name}`}
+        >
           <div className="activity-card__title-row">
             {activity.priority && (
               <span
@@ -65,7 +72,7 @@ export default function ActivityCard({
           )}
 
           {activity.notes && <p className="activity-card__notes">{activity.notes}</p>}
-        </div>
+        </button>
 
         <div className="activity-card__controls">
           <span className={`activity-card__status activity-card__status--${statusSlug(activity.status)}`}>
