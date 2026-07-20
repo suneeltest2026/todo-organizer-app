@@ -62,20 +62,24 @@
   flex-shrink: 0;
 }
 
-.activity-card__priority-flag--low {
-  color: var(--text-tertiary);
+.activity-card__priority-flag--p1 {
+  color: var(--danger);
 }
 
-.activity-card__priority-flag--medium {
-  color: var(--accent);
-}
-
-.activity-card__priority-flag--high {
+.activity-card__priority-flag--p2 {
   color: var(--warning);
 }
 
-.activity-card__priority-flag--urgent {
-  color: var(--danger);
+.activity-card__priority-flag--p3 {
+  color: var(--accent);
+}
+
+.activity-card__priority-flag--p4 {
+  color: var(--success);
+}
+
+.activity-card__priority-flag--p5 {
+  color: var(--text-tertiary);
 }
 
 .activity-card__name {

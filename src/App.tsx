@@ -374,6 +374,7 @@ function App() {
               statuses={settings.statuses}
               viewMode={viewMode}
               activity={editingActivity ?? undefined}
+              existingActivities={activities}
               onSave={handleSaveActivity}
               onClose={closeSheet}
             />

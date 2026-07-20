@@ -14,10 +14,11 @@ interface ActivityCardProps {
 }
 
 const PRIORITY_CLASS: Record<Priority, string> = {
-  low: 'activity-card__priority-flag--low',
-  medium: 'activity-card__priority-flag--medium',
-  high: 'activity-card__priority-flag--high',
-  urgent: 'activity-card__priority-flag--urgent',
+  p1: 'activity-card__priority-flag--p1',
+  p2: 'activity-card__priority-flag--p2',
+  p3: 'activity-card__priority-flag--p3',
+  p4: 'activity-card__priority-flag--p4',
+  p5: 'activity-card__priority-flag--p5',
 }
 
 export default function ActivityCard({
