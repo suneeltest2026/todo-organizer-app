@@ -209,7 +209,9 @@ function App() {
   }
 
   function handleExport() {
-    exportActivitiesToExcel(activities, `${workspace}-activities.xlsx`)
+    exportActivitiesToExcel(activities, `${workspace}-activities.xlsx`).catch(() => {
+      alert("Couldn't create the Excel file. Please try again, or try opening the app in Safari/Chrome directly instead of through another app's link.")
+    })
   }
 
   function handleReminderChange(reminder: ReminderSettingsType) {
@@ -372,6 +374,7 @@ function App() {
               statuses={settings.statuses}
               viewMode={viewMode}
               activity={editingActivity ?? undefined}
+              existingActivities={activities}
               onSave={handleSaveActivity}
               onClose={closeSheet}
             />

@@ -10,11 +10,20 @@ interface AddTaskSheetProps {
   viewMode: ViewMode
   /** When provided, the sheet edits this activity in place instead of creating a new one. */
   activity?: Activity
+  /** Current activities, used to warn before adding a task with a name that's already in use. */
+  existingActivities: Activity[]
   onSave: (activity: Activity) => void
   onClose: () => void
 }
 
-export default function AddTaskSheet({ statuses, viewMode, activity, onSave, onClose }: AddTaskSheetProps) {
+export default function AddTaskSheet({
+  statuses,
+  viewMode,
+  activity,
+  existingActivities,
+  onSave,
+  onClose,
+}: AddTaskSheetProps) {
   const [guidedMode, setGuidedMode] = useState(false)
   const isEditing = !!activity
 
@@ -45,12 +54,19 @@ export default function AddTaskSheet({ statuses, viewMode, activity, onSave, onC
             <GuidedEntry
               statuses={statuses}
               viewMode={viewMode}
+              existingActivities={existingActivities}
               onAdd={handleSave}
               onCancel={() => setGuidedMode(false)}
             />
           ) : (
             <>
-              <ActivityForm statuses={statuses} viewMode={viewMode} activity={activity} onSave={handleSave} />
+              <ActivityForm
+                statuses={statuses}
+                viewMode={viewMode}
+                activity={activity}
+                existingActivities={existingActivities}
+                onSave={handleSave}
+              />
               {!isEditing && (
                 <button
                   type="button"

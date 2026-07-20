@@ -27,15 +27,31 @@ export const PERIOD_LABELS: Record<ViewMode, string> = {
   halfyearly: 'Half-Yearly',
 }
 
-export type Priority = 'low' | 'medium' | 'high' | 'urgent'
+export type Priority = 'p1' | 'p2' | 'p3' | 'p4' | 'p5'
 
-export const PRIORITY_ORDER: Priority[] = ['low', 'medium', 'high', 'urgent']
+/** p1 = highest priority, p5 = lowest. */
+export const PRIORITY_ORDER: Priority[] = ['p1', 'p2', 'p3', 'p4', 'p5']
 
 export const PRIORITY_LABELS: Record<Priority, string> = {
-  low: 'Low',
-  medium: 'Medium',
-  high: 'High',
-  urgent: 'Urgent',
+  p1: '1st (Highest)',
+  p2: '2nd',
+  p3: '3rd',
+  p4: '4th',
+  p5: '5th (Lowest)',
+}
+
+/** Maps the old Low/Medium/High/Urgent scale to the nearest priority on the new 1st-5th scale. */
+const LEGACY_PRIORITY_MAP: Record<string, Priority> = {
+  urgent: 'p1',
+  high: 'p2',
+  medium: 'p3',
+  low: 'p4',
+}
+
+export function normalizePriority(value: string | null | undefined): Priority | undefined {
+  if (!value) return undefined
+  if ((PRIORITY_ORDER as string[]).includes(value)) return value as Priority
+  return LEGACY_PRIORITY_MAP[value]
 }
 
 export interface SubTask {

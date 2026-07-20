@@ -4,12 +4,15 @@ import type { Activity, Priority, Recurrence, ViewMode } from '../types'
 import { PERIOD_LABELS, PRIORITY_LABELS, PRIORITY_ORDER, RECURRENCE_LABELS, RECURRENCE_ORDER } from '../types'
 import UniversalInput from './UniversalInput'
 import { periodKeyFor, periodLabel, todayISO } from '../dateUtils'
+import { hasDuplicateName } from '../duplicateCheck'
 import { IconChevronLeft, IconChevronRight, IconPlus, IconX } from './icons'
 import './GuidedEntry.css'
 
 interface GuidedEntryProps {
   statuses: string[]
   viewMode: ViewMode
+  /** Current activities, used to warn before adding a task with a name that's already in use. */
+  existingActivities: Activity[]
   onAdd: (activity: Activity) => void
   onCancel: () => void
 }
@@ -24,7 +27,7 @@ const STEPS: { id: StepId; label: string; optional?: boolean }[] = [
   { id: 'notes', label: 'Notes', optional: true },
 ]
 
-export default function GuidedEntry({ statuses, viewMode, onAdd, onCancel }: GuidedEntryProps) {
+export default function GuidedEntry({ statuses, viewMode, existingActivities, onAdd, onCancel }: GuidedEntryProps) {
   const [stepIndex, setStepIndex] = useState(0)
   const [name, setName] = useState('')
   const [status, setStatus] = useState(statuses[0] ?? 'Not Started')
@@ -66,6 +69,12 @@ export default function GuidedEntry({ statuses, viewMode, onAdd, onCancel }: Gui
   function submit() {
     const trimmed = name.trim()
     if (!trimmed) return
+
+    if (hasDuplicateName(trimmed, existingActivities)) {
+      const proceed = window.confirm(`You already have a task named "${trimmed}". Add it again anyway?`)
+      if (!proceed) return
+    }
+
     const now = new Date().toISOString()
     const activity: Activity = {
       id: uuidv4(),

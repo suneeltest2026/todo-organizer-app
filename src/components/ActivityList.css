@@ -34,6 +34,19 @@
   margin-bottom: 0.6rem;
 }
 
+.activity-list__subgroup + .activity-list__subgroup {
+  margin-top: 0.9rem;
+}
+
+.activity-list__subgroup-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 0 0 0.5rem;
+}
+
 .activity-list__items {
   list-style: none;
   margin: 0;

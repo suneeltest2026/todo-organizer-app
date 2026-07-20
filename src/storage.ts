@@ -1,5 +1,5 @@
-import type { Activity, AppSettings, Priority, Recurrence, SubTask, ViewMode, Workspace } from './types'
-import { DEFAULT_SETTINGS, DEFAULT_WORKSPACE } from './types'
+import type { Activity, AppSettings, Recurrence, SubTask, ViewMode, Workspace } from './types'
+import { DEFAULT_SETTINGS, DEFAULT_WORKSPACE, normalizePriority } from './types'
 import { supabase } from './supabaseClient'
 
 const WORKSPACE_KEY = 'todo-organizer.workspace'
@@ -39,7 +39,7 @@ function rowToActivity(row: ActivityRow): Activity {
     period: row.period as ViewMode,
     date: row.date,
     time: row.time ?? undefined,
-    priority: (row.priority as Priority | null) ?? undefined,
+    priority: normalizePriority(row.priority),
     subtasks: row.subtasks ?? undefined,
     recurrence: (row.recurrence as Recurrence | null) ?? undefined,
     periodKey: row.period_key,

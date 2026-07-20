@@ -4,6 +4,7 @@ import type { Activity, Priority, Recurrence, SubTask, ViewMode } from '../types
 import { PERIOD_LABELS, PRIORITY_LABELS, PRIORITY_ORDER, RECURRENCE_LABELS, RECURRENCE_ORDER } from '../types'
 import UniversalInput from './UniversalInput'
 import { periodKeyFor, periodLabel, todayISO } from '../dateUtils'
+import { hasDuplicateName } from '../duplicateCheck'
 import { IconListChecks, IconPlus, IconX } from './icons'
 import './ActivityForm.css'
 
@@ -12,10 +13,12 @@ interface ActivityFormProps {
   viewMode: ViewMode
   /** When provided, the form edits this activity in place instead of creating a new one. */
   activity?: Activity
+  /** Current activities, used to warn before adding a task with a name that's already in use. */
+  existingActivities: Activity[]
   onSave: (activity: Activity) => void
 }
 
-export default function ActivityForm({ statuses, viewMode, activity, onSave }: ActivityFormProps) {
+export default function ActivityForm({ statuses, viewMode, activity, existingActivities, onSave }: ActivityFormProps) {
   const isEditing = !!activity
   const [name, setName] = useState(activity?.name ?? '')
   const [notes, setNotes] = useState(activity?.notes ?? '')
@@ -55,6 +58,11 @@ export default function ActivityForm({ statuses, viewMode, activity, onSave }: A
     e.preventDefault()
     const trimmed = name.trim()
     if (!trimmed) return
+
+    if (hasDuplicateName(trimmed, existingActivities, activity?.id)) {
+      const proceed = window.confirm(`You already have a task named "${trimmed}". Add it again anyway?`)
+      if (!proceed) return
+    }
 
     // If the user typed a checklist step but never tapped "Add" (or saved straight
     // from the keyboard), carry it into the saved list instead of silently dropping it.
