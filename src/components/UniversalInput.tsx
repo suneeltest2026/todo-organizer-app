@@ -169,6 +169,10 @@ export default function UniversalInput({
                     <li key={i}>{item}</li>
                   ))}
                 </ul>
+                <p className="universal-input__hint">
+                  Double-check against the photo — text that was too small, blurry, or inside a table
+                  can get missed. Add any missing items by typing them in after.
+                </p>
                 <div className="universal-input__multi-detect-actions">
                   <button type="button" className="btn btn-primary btn-sm" onClick={handleConfirmMultiple}>
                     <IconPlus size={14} />
