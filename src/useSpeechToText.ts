@@ -30,6 +30,21 @@ function getSpeechRecognitionCtor(): SpeechRecognitionConstructor | null {
   return w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null
 }
 
+function describeSpeechError(code: string): string {
+  switch (code) {
+    case 'service-not-allowed':
+      return "Voice input isn't available here — this usually happens when the app is opened through another app's built-in browser (like a link tapped in Gmail). Try opening the app link directly in Safari or Chrome instead."
+    case 'not-allowed':
+      return "Microphone access was blocked. Check your browser's site settings and allow microphone access for this page, then try again."
+    case 'audio-capture':
+      return 'No microphone was found on this device.'
+    case 'network':
+      return 'Voice input needs an internet connection to transcribe speech.'
+    default:
+      return `Voice input error: ${code}`
+  }
+}
+
 interface UseSpeechToTextOptions {
   onResult: (finalText: string) => void
 }
@@ -71,7 +86,7 @@ export function useSpeechToText({ onResult }: UseSpeechToTextOptions) {
     }
     recognition.onerror = (event: { error: string }) => {
       if (event.error === 'no-speech') return
-      setError(`Voice input error: ${event.error}`)
+      setError(describeSpeechError(event.error))
       setListening(false)
     }
     recognition.onend = () => {
