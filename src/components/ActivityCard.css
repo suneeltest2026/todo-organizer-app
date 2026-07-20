@@ -175,30 +175,14 @@
   gap: 0.5rem;
 }
 
-.activity-card__subtasks-toggle {
+.activity-card__subtasks-label {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
   align-self: flex-start;
-  border: none;
-  background: transparent;
   color: var(--text-secondary);
   font-size: 0.8rem;
   font-weight: 600;
-  cursor: pointer;
-  padding: 0;
-}
-
-.activity-card__subtasks-toggle:hover {
-  color: var(--accent);
-}
-
-.activity-card__subtasks-chevron {
-  transition: transform 0.15s ease;
-}
-
-.activity-card__subtasks-chevron.is-open {
-  transform: rotate(90deg);
 }
 
 .activity-card__subtask-checklist {

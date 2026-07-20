@@ -1,8 +1,7 @@
-import { useState } from 'react'
 import type { Activity, Priority } from '../types'
 import { PRIORITY_LABELS, RECURRENCE_LABELS } from '../types'
 import { formatTimeLabel } from '../dateUtils'
-import { IconChevronRight, IconClock, IconFlag, IconRepeat, IconTrash } from './icons'
+import { IconClock, IconFlag, IconListChecks, IconRepeat, IconTrash } from './icons'
 import './ActivityCard.css'
 
 interface ActivityCardProps {
@@ -29,7 +28,6 @@ export default function ActivityCard({
   onToggleSubtask,
   onEdit,
 }: ActivityCardProps) {
-  const [isExpanded, setIsExpanded] = useState(false)
   const subtasks = activity.subtasks ?? []
   const doneCount = subtasks.filter((s) => s.done).length
 
@@ -102,34 +100,24 @@ export default function ActivityCard({
 
       {subtasks.length > 0 && (
         <div className="activity-card__subtasks">
-          <button
-            type="button"
-            className="activity-card__subtasks-toggle"
-            onClick={() => setIsExpanded((v) => !v)}
-            aria-expanded={isExpanded}
-          >
-            <IconChevronRight
-              size={14}
-              className={`activity-card__subtasks-chevron ${isExpanded ? 'is-open' : ''}`}
-            />
+          <span className="activity-card__subtasks-label">
+            <IconListChecks size={14} />
             {doneCount}/{subtasks.length} subtasks
-          </button>
-          {isExpanded && (
-            <ul className="activity-card__subtask-checklist">
-              {subtasks.map((s) => (
-                <li key={s.id}>
-                  <label>
-                    <input
-                      type="checkbox"
-                      checked={s.done}
-                      onChange={() => onToggleSubtask(activity.id, s.id)}
-                    />
-                    <span className={s.done ? 'is-done' : ''}>{s.name}</span>
-                  </label>
-                </li>
-              ))}
-            </ul>
-          )}
+          </span>
+          <ul className="activity-card__subtask-checklist">
+            {subtasks.map((s) => (
+              <li key={s.id}>
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={s.done}
+                    onChange={() => onToggleSubtask(activity.id, s.id)}
+                  />
+                  <span className={s.done ? 'is-done' : ''}>{s.name}</span>
+                </label>
+              </li>
+            ))}
+          </ul>
         </div>
       )}
     </li>
